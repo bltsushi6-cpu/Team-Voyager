@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniCare AI — Clinical Command Deck &amp; Intelligence Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            900: '#134e4a',
+                            950: '#042f2e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.025);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .glass-card-hover {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card-hover:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(45, 212, 191, 0.3);
+            transform: translateY(-2px);
+        }
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+        .animate-scan {
+            animation: scan 2.5s linear infinite;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .cascade-item {
+            animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(45, 212, 191, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-teal-500 selection:text-slate-950 overflow-x-hidden relative">
+
+    <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+    <div class="fixed top-1/3 right-1/4 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-0 left-1/3 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none z-0"></div>
+
+    <div id="landing-screen" class="relative z-50 flex flex-col min-h-screen justify-between p-4 md:p-8 lg:p-12">
+        <header class="flex items-center justify-between max-w-7xl mx-auto w-full pb-6 border-b border-white/10">
+            <div class="flex items-center space-x-3">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-teal-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-teal-500/20 font-bold text-slate-950 text-xl">
+                    +
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        OmniCare <span class="text-teal-400 font-extrabold">AI</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Clinical Command Deck v2.6</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Clinical AI Engine Online
+                </span>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto w-full py-12 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center my-auto">
+            <div class="lg:col-span-7 space-y-8">
+                <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-teal-300 font-medium">
+                    <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <span>Next-Generation Healthcare Operations Engine</span>
+                </div>
+
+                <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                    Smart Hospital Triage &amp; <br/>
+                    <span class="bg-gradient-to-r from-teal-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">
+                        Resource Optimization Matrix
+                    </span>
+                </h2>
+
+                <div class="glass-panel p-6 rounded-2xl space-y-4 border border-teal-500/20 shadow-2xl">
+                    <h3 class="text-lg font-semibold text-teal-300 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        What does OmniCare AI do?
+                    </h3>
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        <strong>OmniCare AI</strong> is an intelligent clinical assistant created to help emergency room doctors, nurses, and hospital managers make fast, safe, and accurate decisions during high-stress situations.
+                    </p>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Even without medical training, understanding the core system is simple:
+                    </p>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li class="flex items-start gap-3">
+                            <span class="p-1 rounded bg-teal-500/10 text-teal-400 font-bold text-xs mt-0.5">1</span>
+                            <div>
+                                <strong class="text-white">Emergency Patient Prioritization (Triage):</strong> The AI instantly reads patient vital signs and complaints to rank patients from most severe (life-threatening) to least severe.
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="p-1 rounded bg-teal-500/10 text-teal-400 font-bold text-xs mt-0.5">2</span>
+                            <div>
+                                <strong class="text-white">Pharmacy Stock &amp; Resource Tracking:</strong> The system continuously monitors hospital medication supplies, warning staff when key medicines are running low.
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="p-1 rounded bg-teal-500/10 text-teal-400 font-bold text-xs mt-0.5">3</span>
+                            <div>
+                                <strong class="text-white">Visual Tissue &amp; Healing Diagnostics:</strong> Using computer vision, it scans images of patient wounds or tissue to detect signs of infection and track recovery timelines.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="glass-card p-4 rounded-xl text-center">
+                        <div class="text-2xl font-extrabold text-teal-400">99.4%</div>
+                        <div class="text-xs text-slate-400 mt-1">ESI Triage Accuracy</div>
+                    </div>
+                    <div class="glass-card p-4 rounded-xl text-center">
+                        <div class="text-2xl font-extrabold text-cyan-400">&lt; 150ms</div>
+                        <div class="text-xs text-slate-400 mt-1">AI Inference Latency</div>
+                    </div>
+                    <div class="glass-card p-4 rounded-xl text-center">
+                        <div class="text-2xl font-extrabold text-emerald-400">Real-Time</div>
+                        <div class="text-xs text-slate-400 mt-1">Bio-Stock Matrix</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5">
+                <div class="glass-panel p-8 rounded-3xl shadow-2xl border border-white/10 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                    <div class="flex items-center space-x-2 bg-slate-900/80 p-1.5 rounded-xl mb-6 border border-white/5">
+                        <button id="auth-tab-signin" onclick="switchAuthTab('signin')" class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all bg-teal-500 text-slate-950 shadow">
+                            Sign In
+                        </button>
+                        <button id="auth-tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                            Create Account
+                        </button>
+                    </div>
+
+                    <div id="auth-alert" class="hidden mb-4 p-3 rounded-xl border text-xs leading-relaxed font-medium"></div>
+
+                    <form id="form-signin" onsubmit="handleSignInSubmit(event)" class="space-y-4">
+                        <button type="button" onclick="handleGoogleSignIn()" class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition flex items-center justify-center gap-3 shadow-sm">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                            </svg>
+                            <span>Sign in with Google</span>
+                        </button>
+
+                        <div class="relative flex py-1 items-center">
+                            <div class="flex-grow border-t border-white/10"></div>
+                            <span class="flex-shrink mx-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider">or Email / Username</span>
+                            <div class="flex-grow border-t border-white/10"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Clinical ID or Email Address</label>
+                            <input id="signin-email" type="email" required value="dr.vance@omnicare.hospital" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400 transition" placeholder="name@hospital.org" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Security Access Password</label>
+                            <input id="signin-password" type="password" required value="Password123!" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400 transition" placeholder="••••••••" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Assigned Department Node</label>
+                            <select id="signin-dept" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400 transition">
+                                <option>Emergency Department — Node Alpha</option>
+                                <option>Trauma Intensive Care — Node Bravo</option>
+                                <option>Pharmacy Bio-Resource Command</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold rounded-xl text-sm transition shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 mt-2">
+                            <span>Access Clinical Command Deck</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </button>
+                    </form>
+
+                    <form id="form-signup" onsubmit="handleSignUpSubmit(event)" class="space-y-4 hidden">
+                        <button type="button" onclick="handleGoogleSignIn()" class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition flex items-center justify-center gap-3 shadow-sm">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                            </svg>
+                            <span>Sign up with Google</span>
+                        </button>
+
+                        <div class="relative flex py-1 items-center">
+                            <div class="flex-grow border-t border-white/10"></div>
+                            <span class="flex-shrink mx-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider">or Register Account</span>
+                            <div class="flex-grow border-t border-white/10"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Full Name or Username</label>
+                            <input id="signup-username" type="text" required placeholder="e.g. Dr. Sarah Jenkins" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400 transition" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Hospital / Institution Email</label>
+                            <input id="signup-email" type="email" required placeholder="s.jenkins@generalhospital.org" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400 transition" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Medical License / Employee ID</label>
+                            <input id="signup-license" type="text" required placeholder="MD-8849201" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400 transition" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Create Secure Password</label>
+                            <input id="signup-password" type="password" required placeholder="••••••••••••" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400 transition" />
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold rounded-xl text-sm transition shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 mt-2">
+                            <span>Register &amp; Launch Node</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </button>
+                    </form>
+
+                    <div class="mt-6 pt-4 border-t border-white/10 text-center">
+                        <button type="button" id="btn-enter-demo" onclick="enterDemoMode()" class="text-xs text-teal-400 hover:text-teal-300 font-medium underline underline-offset-4 flex items-center justify-center gap-1.5 mx-auto">
+                            <span>Instant Access (Explore App in Demo Mode)</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="max-w-7xl mx-auto w-full pt-6 border-t border-white/10 text-center text-xs text-slate-500">
+            OmniCare AI Emergency Operations Matrix &bull; Certified for Healthcare Systems Simulation &bull; Secure Protocol SSL 256-bit
+        </footer>
+    </div>
+
+    <div id="app-deck" class="relative z-10 flex flex-col min-h-screen hidden">
+        <header class="sticky top-0 z-40 glass-panel border-b border-white/10 shadow-2xl backdrop-blur-xl">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchSection('panel-overview')">
+                    <div class="h-9 w-9 rounded-lg bg-gradient-to-tr from-teal-500 to-cyan-400 flex items-center justify-center font-black text-slate-950 text-lg shadow-md shadow-teal-500/20">
+                        +
+                    </div>
+                    <div>
+                        <span class="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5">
+                            OmniCare <span class="text-teal-400">AI</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider block -mt-1">Command Deck</span>
+                    </div>
+                </div>
+
+                <nav class="hidden md:flex items-center space-x-1 bg-slate-900/60 p-1 rounded-xl border border-white/5">
+                    <button id="nav-overview" onclick="switchSection('panel-overview')" class="nav-tab px-4 py-2 rounded-lg text-xs font-semibold transition-all border border-teal-500/30 bg-teal-500/10 text-teal-400 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        Overview
+                    </button>
+
+                    <button id="nav-triage" onclick="switchSection('panel-triage')" class="nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all border border-transparent flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        Patient Intake &amp; Triage
+                    </button>
+
+                    <button id="nav-inventory" onclick="switchSection('panel-inventory')" class="nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all border border-transparent flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                        Bio-Resource Inventory
+                    </button>
+
+                    <button id="nav-vision" onclick="switchSection('panel-vision')" class="nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all border border-transparent flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        Vision Portal
+                    </button>
+                </nav>
+
+                <div class="flex items-center space-x-3">
+                    <div class="hidden sm:flex flex-col text-right">
+                        <span id="user-display-name" class="text-xs font-bold text-slate-200">Dr. Alex Vance, MD</span>
+                        <span id="user-display-dept" class="text-[10px] text-teal-400 font-mono">Triage Officer &bull; Node Alpha</span>
+                    </div>
+                    <button id="btn-logout" onclick="handleLogout()" title="Lock Deck &amp; Return to Login" class="p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+            <section id="panel-overview" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div onclick="switchSection('panel-triage')" class="glass-panel p-6 rounded-2xl glass-card-hover cursor-pointer border-l-4 border-l-teal-500">
+                        <div class="p-3 rounded-xl bg-teal-500/10 text-teal-400 w-fit mb-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2 group-hover:text-teal-300 transition">Patient Intake &amp; Triage</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                            Input custom patient vitals and context or trigger batch simulation pipelines to automatically categorize patient urgency from ESI Level 1 to 5.
+                        </p>
+                        <span class="text-xs text-teal-400 font-semibold flex items-center gap-1">Launch Intake Deck &rarr;</span>
+                    </div>
+
+                    <div onclick="switchSection('panel-inventory')" class="glass-panel p-6 rounded-2xl glass-card-hover cursor-pointer border-l-4 border-l-cyan-500">
+                        <div class="p-3 rounded-xl bg-cyan-500/10 text-cyan-400 w-fit mb-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Bio-Resource Inventory</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                            Monitor stock sliders across emergency pharmaceuticals. Automated Cross-Formulation Drug Matchers trigger alerts upon critical shortage detection.
+                        </p>
+                        <span class="text-xs text-cyan-400 font-semibold flex items-center gap-1">Manage Stock Sliders &rarr;</span>
+                    </div>
+
+                    <div onclick="switchSection('panel-vision')" class="glass-panel p-6 rounded-2xl glass-card-hover cursor-pointer border-l-4 border-l-emerald-500">
+                        <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit mb-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Vision Diagnostic Portal</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                            Multimodal evaluation suite supporting live webcam frames or uploaded dermal images for tissue regeneration metrics and infection flag screening.
+                        </p>
+                        <span class="text-xs text-emerald-400 font-semibold flex items-center gap-1">Open Vision Array &rarr;</span>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">System Operational Metrics</h3>
+                        <span class="text-xs text-teal-400 font-mono">Live Matrix Sync</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                            <div class="text-xs text-slate-400">Total Patients Evaluated</div>
+                            <div id="stat-evaluated" class="text-xl font-bold text-white mt-1">1,482</div>
+                        </div>
+                        <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                            <div class="text-xs text-slate-400">Inventory Health Index</div>
+                            <div id="stat-sustainability" class="text-xl font-bold text-teal-400 mt-1">88%</div>
+                        </div>
+                        <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                            <div class="text-xs text-slate-400">Active Alert Flags</div>
+                            <div id="stat-alerts" class="text-xl font-bold text-amber-400 mt-1">0</div>
+                        </div>
+                        <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                            <div class="text-xs text-slate-400">AI Model Response</div>
+                            <div class="text-xl font-bold text-emerald-400 mt-1">Optimal</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="panel-triage" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-5 space-y-6">
+                        <div class="glass-panel p-6 rounded-2xl border border-white/10 space-y-4">
+                            <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                                <h3 class="font-bold text-white text-base">Patient Registration</h3>
+                                <button id="btn-autofill-sample" type="button" class="text-xs bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 px-3 py-1 rounded-lg transition font-medium">
+                                    Autofill Sample Data
+                                </button>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Patient Full Name</label>
+                                    <input id="input-patient-name" type="text" placeholder="e.g. John Doe" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-400 focus:outline-none" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Age</label>
+                                        <input id="input-patient-age" type="number" placeholder="42" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-400 focus:outline-none" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">ESI Override (Optional)</label>
+                                        <select id="select-esi-level" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-400 focus:outline-none">
+                                            <option value="auto">Auto-Classify via AI</option>
+                                            <option value="1">ESI 1 — Resuscitation</option>
+                                            <option value="2">ESI 2 — Emergent</option>
+                                            <option value="3">ESI 3 — Urgent</option>
+                                            <option value="4">ESI 4 — Less Urgent</option>
+                                            <option value="5">ESI 5 — Non-Urgent</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Vital Signs Summary</label>
+                                    <input id="input-patient-vitals" type="text" placeholder="BP: 120/80, HR: 72, RR: 16, SpO2: 98%" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-400 focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Chief Complaint &amp; Symptoms</label>
+                                    <textarea id="input-patient-complaint" rows="3" placeholder="Describe symptoms and trauma details..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:border-teal-400 focus:outline-none"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Allocated Medication / Resource</label>
+                                    <input id="input-patient-resource" type="text" placeholder="e.g. Acetaminophen" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-400 focus:outline-none" />
+                                </div>
+                            </div>
+
+                            <button id="btn-add-patient" type="button" class="w-full py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-xs transition shadow-lg shadow-teal-500/20">
+                                Queue Patient Entry
+                            </button>
+                        </div>
+
+                        <div class="glass-panel p-6 rounded-2xl border border-white/10 space-y-4">
+                            <h3 class="font-bold text-white text-sm uppercase tracking-wider">Batch Simulation Controller</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                Generate dynamic patient batches processed simultaneously through AI models.
+                            </p>
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                                <span class="text-xs text-slate-300 font-medium">Mass Casualty Crisis Mode</span>
+                                <input id="toggle-crisis-mode" type="checkbox" class="w-4 h-4 accent-teal-500 rounded cursor-pointer" />
+                            </div>
+                            <button id="btn-run-triage" type="button" class="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold rounded-xl text-xs transition shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2">
+                                <span>Run AI Triage Pipeline</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-white text-base">Triage Queue (Sorted by ESI Priority)</h3>
+                            <span id="queue-count" class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-lg">0 Patients</span>
+                        </div>
+
+                        <div id="triage-queue-container" class="space-y-3 min-h-[400px]">
+                            <div class="glass-panel p-12 rounded-2xl text-center text-slate-500 text-xs">
+                                Queue is currently empty. Run AI Triage or add a patient.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="panel-inventory" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-7 glass-panel p-6 rounded-2xl space-y-6">
+                        <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                            <div>
+                                <h3 class="font-bold text-white text-base">Emergency Stock Control Sliders</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Adjust drug units to test cross-formulation alerts.</p>
+                            </div>
+                            <button id="btn-reset-stock" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl transition">
+                                Reset Stock
+                            </button>
+                        </div>
+
+                        <div class="space-y-5">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="text-slate-300 font-semibold">Acetaminophen (Analgesic/Antipyretic)</span>
+                                    <span id="val-Acetaminophen" class="text-teal-400 font-mono font-bold">100 units</span>
+                                </div>
+                                <input type="range" min="0" max="100" value="100" class="stock-slider w-full accent-teal-400 bg-slate-800 h-2 rounded-lg cursor-pointer" data-med="Acetaminophen" />
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="text-slate-300 font-semibold">Ibuprofen (NSAID)</span>
+                                    <span id="val-Ibuprofen" class="text-teal-400 font-mono font-bold">100 units</span>
+                                </div>
+                                <input type="range" min="0" max="100" value="100" class="stock-slider w-full accent-teal-400 bg-slate-800 h-2 rounded-lg cursor-pointer" data-med="Ibuprofen" />
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="text-slate-300 font-semibold">Amoxicillin (Broad-Spectrum Antibiotic)</span>
+                                    <span id="val-Amoxicillin" class="text-teal-400 font-mono font-bold">50 units</span>
+                                </div>
+                                <input type="range" min="0" max="100" value="50" class="stock-slider w-full accent-teal-400 bg-slate-800 h-2 rounded-lg cursor-pointer" data-med="Amoxicillin" />
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="text-slate-300 font-semibold">Azithromycin (Macrolide Antibiotic)</span>
+                                    <span id="val-Azithromycin" class="text-teal-400 font-mono font-bold">50 units</span>
+                                </div>
+                                <input type="range" min="0" max="100" value="50" class="stock-slider w-full accent-teal-400 bg-slate-800 h-2 rounded-lg cursor-pointer" data-med="Azithromycin" />
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="text-slate-300 font-semibold">Epinephrine (Vasopressor / Anaphylaxis)</span>
+                                    <span id="val-Epinephrine" class="text-teal-400 font-mono font-bold">10 units</span>
+                                </div>
+                                <input type="range" min="0" max="50" value="10" class="stock-slider w-full accent-teal-400 bg-slate-800 h-2 rounded-lg cursor-pointer" data-med="Epinephrine" />
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="text-slate-300 font-semibold">Morphine Sulfate (Opioid Analgesic)</span>
+                                    <span id="val-Morphine Sulfate" class="text-teal-400 font-mono font-bold">20 units</span>
+                                </div>
+                                <input type="range" min="0" max="50" value="20" class="stock-slider w-full accent-teal-400 bg-slate-800 h-2 rounded-lg cursor-pointer" data-med="Morphine Sulfate" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-5 space-y-6">
+                        <div class="glass-panel p-6 rounded-2xl flex flex-col items-center text-center">
+                            <h3 class="font-bold text-white text-sm uppercase tracking-wider mb-4">Bio-Resource Sustainability Score</h3>
+                            <div class="relative w-36 h-36 flex items-center justify-center mb-2">
+                                <svg class="w-full h-full" viewBox="0 0 36 36">
+                                    <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path id="sustainability-gauge" class="text-teal-400 transition-all duration-500" stroke-dasharray="88, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                </svg>
+                                <div class="absolute flex flex-col items-center justify-center">
+                                    <span id="sustainability-text" class="text-3xl font-extrabold text-white">88%</span>
+                                    <span class="text-[10px] text-slate-400 uppercase">Health</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-400">Emergency inventory capacity status operating within normal limits.</p>
+                        </div>
+
+                        <div class="glass-panel p-6 rounded-2xl space-y-3">
+                            <h3 class="font-bold text-white text-xs uppercase tracking-wider">Automated Cross-Formulation Alerts</h3>
+                            <div id="cross-alerts-container" class="space-y-2 text-xs">
+                                <div class="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-300">
+                                    All resource allocations operating inside normal thresholds.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="panel-vision" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-6 space-y-6">
+                        <div class="glass-panel p-6 rounded-2xl space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-white text-base">Image Data Payload Source</h3>
+                                <div class="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-white/5">
+                                    <button id="btn-mode-file" class="px-3 py-1 rounded-lg text-xs font-semibold bg-teal-500 text-slate-950">File Upload</button>
+                                    <button id="btn-mode-webcam" class="px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">Webcam Capture</button>
+                                </div>
+                            </div>
+
+                            <div id="box-file-upload" class="border-2 border-dashed border-slate-700 hover:border-teal-400 rounded-2xl p-8 text-center cursor-pointer transition relative bg-slate-900/50">
+                                <input type="file" id="input-vision-file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" />
+                                <svg class="w-10 h-10 text-teal-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <div class="text-xs text-slate-200 font-semibold">Drop clinical image here or click to browse</div>
+                                <div class="text-[10px] text-slate-500 mt-1">Supports PNG, JPG, JPEG up to 10MB</div>
+                            </div>
+
+                            <div id="box-webcam" class="hidden space-y-3">
+                                <div class="relative rounded-2xl overflow-hidden bg-slate-900 aspect-video border border-white/10 flex items-center justify-center">
+                                    <video id="webcam-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+                                    <div id="webcam-placeholder" class="text-xs text-slate-500 text-center p-4">
+                                        Click "Start Camera" to initialize live vision payload stream.
+                                    </div>
+                                    <div id="webcam-scanner" class="hidden absolute inset-0 pointer-events-none border-2 border-teal-400/50">
+                                        <div class="w-full h-0.5 bg-teal-400 shadow-[0_0_15px_#2dd4bf] animate-scan"></div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button id="btn-start-cam" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl text-slate-200 border border-slate-700 transition">
+                                        Start Camera
+                                    </button>
+                                    <button id="btn-capture-cam" class="flex-1 py-2 bg-teal-500 hover:bg-teal-400 text-xs font-semibold rounded-xl text-slate-950 transition hidden">
+                                        Capture Frame
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-xs font-medium text-slate-300">Operational Phase Focus</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button id="phase-id" class="py-2 rounded-xl text-xs font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                                        1. Identification Screening
+                                    </button>
+                                    <button id="phase-track" class="py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-400 border border-white/5">
+                                        2. Progression Tracking
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button id="btn-analyze-vision" type="button" class="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold rounded-xl text-xs transition shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2">
+                                <span>Analyze Image Payload</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-6 space-y-6">
+                        <div class="glass-panel p-6 rounded-2xl space-y-4">
+                            <h3 class="font-bold text-white text-base border-b border-white/10 pb-3">Multimodal Analysis Output</h3>
+                            <div id="vision-results-container">
+                                <div class="text-center py-12 text-slate-500 text-xs">
+                                    No vision payload analyzed yet. Upload an image or capture a webcam frame to view diagnostics.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-6 rounded-2xl space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-white text-xs uppercase tracking-wider">Visual Evaluation Timeline Log</h3>
+                                <button id="btnClearTimeline" class="text-[10px] text-slate-400 hover:text-rose-400 transition">Clear Log</button>
+                            </div>
+                            <div id="vision-timeline-container" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-prognosis" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
+        <div class="glass-panel max-w-2xl w-full rounded-3xl p-6 md:p-8 space-y-6 border border-white/10 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button id="btn-close-modal" class="absolute top-6 right-6 text-slate-400 hover:text-white text-xl p-1 rounded-lg hover:bg-white/5 transition">&times;</button>
+            <div class="flex items-center space-x-3 border-b border-white/10 pb-4">
+                <div id="modal-esi-badge" class="px-3 py-1 rounded-xl text-xs font-extrabold uppercase font-mono">ESI 1</div>
+                <div>
+                    <h3 id="modal-patient-name" class="text-lg font-bold text-white">Patient Prognosis Details</h3>
+                    <p id="modal-patient-meta" class="text-xs text-slate-400">ID: PT-1001 &bull; Age: --</p>
+                </div>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <div class="text-slate-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Expected Timeline / Duration</div>
+                    <div id="modal-duration" class="p-3 rounded-xl bg-white/5 text-slate-200 border border-white/5">--</div>
+                </div>
+                <div>
+                    <div class="text-slate-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Long-Term Progression &amp; Expectations</div>
+                    <div id="modal-expectations" class="p-3 rounded-xl bg-white/5 text-slate-200 border border-white/5 leading-relaxed">--</div>
+                </div>
+                <div>
+                    <div class="text-slate-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Treatment &amp; Rehabilitation Plan</div>
+                    <div id="modal-treatment" class="p-3 rounded-xl bg-white/5 text-slate-200 border border-white/5 leading-relaxed">--</div>
+                </div>
+                <div>
+                    <div class="text-slate-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Recommended Medications</div>
+                    <div id="modal-medications" class="flex flex-wrap gap-2 pt-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Authentication SDK Instance
+        let sbClient = null;
+
+        // Initialize Supabase configuration from Flask Backend
+        async function initSupabase() {
+            try {
+                const res = await fetch('/api/config');
+                const config = await res.json();
+                if (config.supabase_url && config.supabase_anon_key && window.supabase) {
+                    sbClient = window.supabase.createClient(config.supabase_url, config.supabase_anon_key);
+
+                    // Listen for Supabase session changes (e.g. OAuth redirect)
+                    sbClient.auth.onAuthStateChange((event, session) => {
+                        if (session && session.user) {
+                            enterCommandDeck(session.user);
+                        }
+                    });
+
+                    // Initial session lookup
+                    const { data: { session } } = await sbClient.auth.getSession();
+                    if (session && session.user) {
+                        enterCommandDeck(session.user);
+                    }
+                }
+            } catch (e) {
+                console.log("Supabase config check:", e);
+            }
+        }
+
+        function showAuthAlert(message, type = 'info') {
+            const alertBox = document.getElementById('auth-alert');
+            alertBox.classList.remove('hidden', 'bg-rose-500/10', 'border-rose-500/30', 'text-rose-300', 'bg-teal-500/10', 'border-teal-500/30', 'text-teal-300', 'bg-amber-500/10', 'border-amber-500/30', 'text-amber-300');
+            
+            if (type === 'error') {
+                alertBox.classList.add('bg-rose-500/10', 'border-rose-500/30', 'text-rose-300');
+            } else if (type === 'success') {
+                alertBox.classList.add('bg-teal-500/10', 'border-teal-500/30', 'text-teal-300');
+            } else {
+                alertBox.classList.add('bg-amber-500/10', 'border-amber-500/30', 'text-amber-300');
+            }
+            alertBox.innerHTML = message;
+        }
+
+        function switchAuthTab(tab) {
+            const btnSignin = document.getElementById('auth-tab-signin');
+            const btnSignup = document.getElementById('auth-tab-signup');
+            const formSignin = document.getElementById('form-signin');
+            const formSignup = document.getElementById('form-signup');
+            document.getElementById('auth-alert').classList.add('hidden');
+
+            if (tab === 'signin') {
+                btnSignin.className = "flex-1 py-2 rounded-lg text-xs font-semibold transition-all bg-teal-500 text-slate-950 shadow";
+                btnSignup.className = "flex-1 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all";
+                formSignin.classList.remove('hidden');
+                formSignup.classList.add('hidden');
+            } else {
+                btnSignup.className = "flex-1 py-2 rounded-lg text-xs font-semibold transition-all bg-teal-500 text-slate-950 shadow";
+                btnSignin.className = "flex-1 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all";
+                formSignup.classList.remove('hidden');
+                formSignin.classList.add('hidden');
+            }
+        }
+
+        async function handleGoogleSignIn() {
+            if (!sbClient) {
+                showAuthAlert("Supabase credentials not configured in .env yet. Authenticating in local mode...", "info");
+                setTimeout(() => {
+                    enterCommandDeck({ email: 'google.user@omnicare.hospital', user_metadata: { full_name: 'Google User' } });
+                }, 1000);
+                return;
+            }
+            showAuthAlert("Redirecting to Google OAuth...", "info");
+            const { error } = await sbClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin
+                }
+            });
+            if (error) {
+                showAuthAlert(error.message, "error");
+            }
+        }
+
+        async function handleSignInSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+            const dept = document.getElementById('signin-dept').value;
+
+            if (!sbClient) {
+                showAuthAlert("Logging in via local clinical node...", "info");
+                setTimeout(() => {
+                    enterCommandDeck({ email: email, user_metadata: { full_name: email.split('@')[0], department: dept } });
+                }, 600);
+                return;
+            }
+
+            showAuthAlert("Authenticating with Supabase...", "info");
+            const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                showAuthAlert(error.message, "error");
+            } else if (data.user) {
+                showAuthAlert("Access Granted!", "success");
+                enterCommandDeck(data.user);
+            }
+        }
+
+        async function handleSignUpSubmit(e) {
+            e.preventDefault();
+            const username = document.getElementById('signup-username').value;
+            const email = document.getElementById('signup-email').value;
+            const license = document.getElementById('signup-license').value;
+            const password = document.getElementById('signup-password').value;
+
+            if (!sbClient) {
+                showAuthAlert("Account created locally. Launching command deck...", "success");
+                setTimeout(() => {
+                    enterCommandDeck({ email: email, user_metadata: { full_name: username, license: license } });
+                }, 800);
+                return;
+            }
+
+            showAuthAlert("Registering new clinical credential in Supabase...", "info");
+            const { data, error } = await sbClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        full_name: username,
+                        medical_license: license
+                    }
+                }
+            });
+
+            if (error) {
+                showAuthAlert(error.message, "error");
+            } else if (data.user) {
+                showAuthAlert("Registration successful! Check email if verification is required.", "success");
+                if (data.session) {
+                    enterCommandDeck(data.user);
+                }
+            }
+        }
+
+        function enterDemoMode() {
+            enterCommandDeck({
+                email: 'dr.vance@omnicare.hospital',
+                user_metadata: { full_name: 'Dr. Alex Vance, MD' }
+            });
+        }
+
+        function enterCommandDeck(user) {
+            const landingScreen = document.getElementById('landing-screen');
+            const appDeck = document.getElementById('app-deck');
+
+            const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Clinical Officer';
+            document.getElementById('user-display-name').textContent = name;
+            
+            landingScreen.classList.add('hidden');
+            appDeck.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function handleLogout() {
+            if (sbClient) {
+                await sbClient.auth.signOut();
+            }
+            const appDeck = document.getElementById('app-deck');
+            const landingScreen = document.getElementById('landing-screen');
+            appDeck.classList.add('hidden');
+            landingScreen.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Initialize Supabase on Load
+        document.addEventListener('DOMContentLoaded', initSupabase);
+
+        // Core UI Navigation
+        function switchSection(sectionId) {
+            ['panel-overview', 'panel-triage', 'panel-inventory', 'panel-vision'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+
+            ['nav-overview', 'nav-triage', 'nav-inventory', 'nav-vision'].forEach(navId => {
+                const btn = document.getElementById(navId);
+                btn.className = "nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all border border-transparent flex items-center gap-2";
+            });
+
+            const activeNavMap = {
+                'panel-overview': 'nav-overview',
+                'panel-triage': 'nav-triage',
+                'panel-inventory': 'nav-inventory',
+                'panel-vision': 'nav-vision'
+            };
+            const activeNav = document.getElementById(activeNavMap[sectionId]);
+            if (activeNav) {
+                activeNav.className = "nav-tab px-4 py-2 rounded-lg text-xs font-semibold transition-all border border-teal-500/30 bg-teal-500/10 text-teal-400 flex items-center gap-2";
+            }
+        }
+
+        // Sample Patient Preset Data
+        const SAMPLE_PATIENTS = [
+            { name: "Eleanor Vance", age: 68, vitals: "BP: 168/104, HR: 115, RR: 24, SpO2: 90%", complaint: "Acute crushing chest pain, diaphoresis, shortness of breath.", esi: "1", resource: "Epinephrine & Nitroglycerin" },
+            { name: "Marcus Thorne", age: 34, vitals: "BP: 110/70, HR: 88, RR: 16, SpO2: 98%", complaint: "Deep 6cm laceration on right forearm, controlled with pressure.", esi: "4", resource: "Ibuprofen (Analgesic)" }
+        ];
+        let sampleIndex = 0;
+
+        document.getElementById('btn-autofill-sample').addEventListener('click', () => {
+            const sample = SAMPLE_PATIENTS[sampleIndex];
+            sampleIndex = (sampleIndex + 1) % SAMPLE_PATIENTS.length;
+            document.getElementById('input-patient-name').value = sample.name;
+            document.getElementById('input-patient-age').value = sample.age;
+            document.getElementById('input-patient-vitals').value = sample.vitals;
+            document.getElementById('input-patient-complaint').value = sample.complaint;
+            document.getElementById('select-esi-level').value = sample.esi;
+            document.getElementById('input-patient-resource').value = sample.resource;
+        });
+
+        // Inventory Stock & Triage Pipeline Logic
+        let currentInventory = {
+            "Acetaminophen": 100,
+            "Ibuprofen": 100,
+            "Amoxicillin": 50,
+            "Azithromycin": 50,
+            "Epinephrine": 10,
+            "Morphine Sulfate": 20
+        };
+
+        let currentQueue = [];
+
+        document.querySelectorAll('.stock-slider').forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const med = e.target.getAttribute('data-med');
+                const val = e.target.value;
+                currentInventory[med] = parseInt(val);
+                document.getElementById(`val-${med}`).textContent = `${val} units`;
+            });
+        });
+
+        document.getElementById('btn-reset-stock').addEventListener('click', () => {
+            currentInventory = { "Acetaminophen": 100, "Ibuprofen": 100, "Amoxicillin": 50, "Azithromycin": 50, "Epinephrine": 10, "Morphine Sulfate": 20 };
+            document.querySelectorAll('.stock-slider').forEach(slider => {
+                const med = slider.getAttribute('data-med');
+                slider.value = currentInventory[med];
+                document.getElementById(`val-${med}`).textContent = `${currentInventory[med]} units`;
+            });
+        });
+
+        document.getElementById('btn-run-triage').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-run-triage');
+            btn.disabled = true;
+            btn.innerHTML = `<span>Processing Groq AI Triage...</span>`;
+
+            try {
+                const crisis = document.getElementById('toggle-crisis-mode').checked;
+                const res = await fetch('/api/triage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ inventory: currentInventory, crisis_mode: crisis })
+                });
+                const data = await res.json();
+                if (data.triage_queue) {
+                    currentQueue = data.triage_queue;
+                    renderQueue(currentQueue);
+                    renderResourceAnalysis(data.resource_analysis);
+                }
+            } catch (e) {
+                console.error("Triage Error:", e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Run AI Triage Pipeline</span>`;
+            }
+        });
+
+        document.getElementById('btn-add-patient').addEventListener('click', () => {
+            const name = document.getElementById('input-patient-name').value || "Unnamed Patient";
+            const age = document.getElementById('input-patient-age').value || 30;
+            const vitals = document.getElementById('input-patient-vitals').value || "BP: 120/80, HR: 72, RR: 16, SpO2: 98%";
+            const complaint = document.getElementById('input-patient-complaint').value || "General consultation.";
+            const esiOverride = document.getElementById('select-esi-level').value;
+            const resource = document.getElementById('input-patient-resource').value || "Acetaminophen";
+
+            const esiVal = esiOverride === "auto" ? 3 : parseInt(esiOverride);
+            const colorMap = { 1: "red", 2: "orange", 3: "yellow", 4: "green", 5: "blue" };
+
+            const p = {
+                patient_id: `PT-${1000 + currentQueue.length}`,
+                name: name,
+                age: parseInt(age),
+                chief_complaint: complaint,
+                vitals: vitals,
+                esi_level: esiVal,
+                color_code: colorMap[esiVal],
+                allocated_resource: resource,
+                clinical_justification: "Manually registered and queued.",
+                prognosis_outlook: {
+                    expected_duration: "2-4 Weeks",
+                    long_term_expectations: "Standard recovery trajectory. Monitor vital trends.",
+                    treatment_plan: "Scheduled outpatient follow-up.",
+                    recommended_medications: [resource]
+                }
+            };
+
+            currentQueue.unshift(p);
+            currentQueue.sort((a,b) => a.esi_level - b.esi_level);
+            renderQueue(currentQueue);
+        });
+
+        const ESI_THEME_MAP = {
+            1: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/30', label: 'ESI 1 — Resuscitation' },
+            2: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30', label: 'ESI 2 — Emergent' },
+            3: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30', label: 'ESI 3 — Urgent' },
+            4: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30', label: 'ESI 4 — Less Urgent' },
+            5: { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/30', label: 'ESI 5 — Non-Urgent' }
+        };
+
+        function renderQueue(queue) {
+            const container = document.getElementById('triage-queue-container');
+            document.getElementById('queue-count').textContent = `${queue.length} Patients`;
+
+            if (queue.length === 0) {
+                container.innerHTML = `<div class="glass-panel p-12 rounded-2xl text-center text-slate-500 text-xs">Queue is currently empty.</div>`;
+                return;
+            }
+
+            container.innerHTML = queue.map((p, idx) => {
+                const theme = ESI_THEME_MAP[p.esi_level] || ESI_THEME_MAP[3];
+                return `
+                    <div class="glass-panel p-4 rounded-2xl border ${theme.border} space-y-3 cascade-item">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold ${theme.bg} ${theme.text} border ${theme.border}">
+                                    ${theme.label}
+                                </span>
+                                <span class="font-bold text-white text-sm">${p.name}</span>
+                                <span class="text-xs text-slate-400">(${p.age} yrs)</span>
+                            </div>
+                            <span class="text-xs font-mono text-slate-400">${p.patient_id}</span>
+                        </div>
+                        <div class="text-xs text-slate-300"><strong class="text-slate-200">Complaint:</strong> ${p.chief_complaint}</div>
+                        <div class="text-xs text-slate-400 font-mono"><strong class="text-slate-300">Vitals:</strong> ${p.vitals}</div>
+                        <div class="flex items-center justify-between pt-2 border-t border-white/5">
+                            <span class="text-xs text-teal-300"><strong class="text-slate-400">Rx:</strong> ${p.allocated_resource || 'None'}</span>
+                            <button onclick="openPrognosisModal('${p.patient_id}')" class="text-xs text-teal-400 hover:text-teal-300 font-semibold underline underline-offset-2">
+                                View Prognosis &rarr;
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderResourceAnalysis(analysis) {
+            if (!analysis) return;
+            const score = analysis.sustainability_score || 88;
+            document.getElementById('sustainability-text').textContent = `${score}%`;
+            document.getElementById('stat-sustainability').textContent = `${score}%`;
+
+            const alertsContainer = document.getElementById('cross-alerts-container');
+            const alerts = analysis.cross_formulation_alerts || [];
+            document.getElementById('stat-alerts').textContent = alerts.length;
+
+            if (alerts.length === 0) {
+                alertsContainer.innerHTML = `<div class="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-300">All resource allocations operating inside normal thresholds.</div>`;
+            } else {
+                alertsContainer.innerHTML = alerts.map(a => `
+                    <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                        ${a}
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Prognosis Modal
+        function openPrognosisModal(patientId) {
+            const p = currentQueue.find(item => item.patient_id === patientId);
+            if (!p) return;
+
+            const modal = document.getElementById('modal-prognosis');
+            const prog = p.prognosis_outlook || {};
+            const theme = ESI_THEME_MAP[p.esi_level] || ESI_THEME_MAP[3];
+
+            document.getElementById('modal-esi-badge').textContent = theme.label;
+            document.getElementById('modal-esi-badge').className = `px-3 py-1 rounded-xl text-xs font-extrabold uppercase font-mono ${theme.bg} ${theme.text} border ${theme.border}`;
+            document.getElementById('modal-patient-name').textContent = p.name;
+            document.getElementById('modal-patient-meta').textContent = `ID: ${p.patient_id} • Age: ${p.age} • Vitals: ${p.vitals}`;
+
+            document.getElementById('modal-duration').textContent = prog.expected_duration || "3-6 Weeks";
+            document.getElementById('modal-expectations').textContent = prog.long_term_expectations || "Gradual resolution of symptoms under clinical monitoring.";
+            document.getElementById('modal-treatment').textContent = prog.treatment_plan || "Standard clinical follow-up and progressive rehab.";
+
+            const medsContainer = document.getElementById('modal-medications');
+            const meds = prog.recommended_medications || [p.allocated_resource || "Acetaminophen"];
+            medsContainer.innerHTML = meds.map(m => `<span class="px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-300 border border-teal-500/20">${m}</span>`).join('');
+
+            modal.classList.remove('hidden');
+        }
+
+        document.getElementById('btn-close-modal').addEventListener('click', () => {
+            document.getElementById('modal-prognosis').classList.add('hidden');
+        });
+
+        // Vision Multimodal Portal Logic
+        let targetedImageBase64 = null;
+        let currentVisionPhase = 'identification';
+
+        document.getElementById('phase-id').addEventListener('click', () => {
+            currentVisionPhase = 'identification';
+            document.getElementById('phase-id').className = "py-2 rounded-xl text-xs font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30";
+            document.getElementById('phase-track').className = "py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-400 border border-white/5";
+        });
+
+        document.getElementById('phase-track').addEventListener('click', () => {
+            currentVisionPhase = 'healing_progress';
+            document.getElementById('phase-track').className = "py-2 rounded-xl text-xs font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30";
+            document.getElementById('phase-id').className = "py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-400 border border-white/5";
+        });
+
+        document.getElementById('input-vision-file').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    targetedImageBase64 = evt.target.result.split(',')[1];
+                    document.getElementById('box-file-upload').querySelector('.text-xs').textContent = `File selected: ${file.name}`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('btn-analyze-vision').addEventListener('click', async () => {
+            if (!targetedImageBase64) {
+                alert("Please select or capture an image payload first.");
+                return;
+            }
+
+            const container = document.getElementById('vision-results-container');
+            container.innerHTML = `<div class="text-center py-8 text-teal-400 text-xs font-medium animate-pulse">Running Qwen 3.6 Multimodal Vision Inference...</div>`;
+
+            try {
+                const res = await fetch('/api/vision', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: targetedImageBase64, phase: currentVisionPhase })
+                });
+                const data = await res.json();
+                renderVisionResults(data);
+                addVisionTimelineLog(data);
+            } catch (e) {
+                container.innerHTML = `<div class="text-center py-8 text-rose-400 text-xs">Error performing vision analysis.</div>`;
+            }
+        });
+
+        function renderVisionResults(data) {
+            const container = document.getElementById('vision-results-container');
+            const metric = data.tissue_regeneration_metric || 50;
+
+            container.innerHTML = `
+                <div class="space-y-4 cascade-item">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-300">Severity Classification</span>
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">${data.severity_tier || 'Urgent'}</span>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400">Tissue Regeneration Index</span>
+                            <span class="text-teal-400 font-bold">${metric}%</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                            <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full" style="width: ${metric}%"></div>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-slate-300 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/5">${data.educational_explanation}</p>
+
+                    <div>
+                        <div class="text-xs font-bold text-slate-400 mb-2">Infection &amp; Structural Flags</div>
+                        <div class="space-y-1.5">
+                            ${(data.infection_flags || []).map(f => `<div class="text-xs text-amber-300 flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>${f}</div>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        let visionLogs = [];
+        function addVisionTimelineLog(data) {
+            const log = {
+                timestamp: new Date().toLocaleTimeString(),
+                phase: currentVisionPhase,
+                metric: data.tissue_regeneration_metric || 50,
+                tier: data.severity_tier || 'Urgent'
+            };
+            visionLogs.unshift(log);
+            renderTimeline();
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('vision-timeline-container');
+            if (visionLogs.length === 0) {
+                container.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">No visual evaluation records in timeline cache.</div>`;
+                return;
+            }
+
+            container.innerHTML = visionLogs.map(log => `
+                <div class="glass-card p-3 rounded-xl border border-white/5 flex items-center justify-between text-xs">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-mono text-slate-400">[${log.timestamp}]</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-white/5 text-slate-300 border border-white/5">
+                            ${log.phase === 'identification' ? 'ID Screening' : 'Progression Tracking'}
+                        </span>
+                    </div>
+                    <div class="text-slate-300">
+                        Regeneration Metric: <span class="text-teal-400 font-bold">${log.metric}%</span> 
+                        <span class="text-[10px] text-slate-500">(${log.tier})</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('btnClearTimeline').addEventListener('click', () => {
+            visionLogs = [];
+            renderTimeline();
+        });
+
+        renderTimeline();
+    </script>
+</body>
+</html>
