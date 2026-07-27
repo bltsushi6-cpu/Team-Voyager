@@ -684,6 +684,65 @@
         </div>
     </div>
 
+    <div id="modal-diagnosis" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
+        <div class="glass-panel max-w-2xl w-full rounded-3xl p-6 md:p-8 space-y-6 border border-white/10 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button id="btn-close-diagnosis-modal" class="absolute top-6 right-6 text-slate-400 hover:text-white text-xl p-1 rounded-lg hover:bg-white/5 transition">&times;</button>
+            <div class="flex items-center space-x-3 border-b border-white/10 pb-4">
+                <div class="px-3 py-1 rounded-xl text-xs font-extrabold uppercase font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">Diagnosis</div>
+                <div>
+                    <h3 id="diagnosis-modal-patient-name" class="text-lg font-bold text-white">Diagnosis &amp; Care Plan</h3>
+                    <p id="diagnosis-modal-patient-meta" class="text-xs text-slate-400">ID: PT-1001</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="glass-card p-4 rounded-xl space-y-3 border border-white/5">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Physician Upload</h4>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Formal Diagnosis</label>
+                        <textarea id="input-diagnosis-text" rows="3" placeholder="e.g. Stage 2 hypertension with associated left ventricular strain..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:border-cyan-400 focus:outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Care Plan Notes (optional)</label>
+                        <textarea id="input-diagnosis-care-plan" rows="3" placeholder="Follow-up schedule, medications, lifestyle guidance..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:border-cyan-400 focus:outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Physician Name</label>
+                        <input id="input-diagnosis-physician" type="text" placeholder="Dr. Alex Vance, MD" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none" />
+                    </div>
+                    <button id="btn-save-diagnosis" type="button" class="w-full py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl text-xs transition shadow-lg shadow-cyan-500/20">
+                        Upload Diagnosis to Record
+                    </button>
+                    <div id="diagnosis-save-status" class="text-[10px] text-slate-500"></div>
+                </div>
+
+                <div class="glass-card p-4 rounded-xl space-y-2 border border-white/5">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Diagnosis On Record</h4>
+                    <div id="diagnosis-current-text" class="text-xs text-slate-200 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/5">
+                        No diagnosis has been uploaded for this patient yet.
+                    </div>
+                    <div id="diagnosis-current-care-plan" class="text-xs text-slate-300 leading-relaxed"></div>
+                </div>
+
+                <div class="glass-card p-4 rounded-xl space-y-3 border border-white/5">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Care Plan Assistant &mdash; Ask a Question</h4>
+                    <p class="text-[10px] text-slate-500 leading-relaxed">
+                        This assistant answers questions strictly about the diagnosis and care plan on record above, in plain, family-friendly language. It does not replace direct advice from the attending physician or care team.
+                    </p>
+                    <div id="diagnosis-chat-log" class="space-y-2 max-h-56 overflow-y-auto pr-1 text-xs">
+                        <div class="text-slate-500 text-center py-4">No questions asked yet.</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input id="input-diagnosis-question" type="text" placeholder="e.g. What does this diagnosis mean for daily activities?" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none" />
+                        <button id="btn-ask-diagnosis" type="button" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold rounded-xl text-slate-100 transition">
+                            Ask
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Supabase Authentication SDK Instance
         let sbClient = null;
@@ -1029,9 +1088,14 @@
                         <div class="text-xs text-slate-400 font-mono"><strong class="text-slate-300">Vitals:</strong> ${p.vitals}</div>
                         <div class="flex items-center justify-between pt-2 border-t border-white/5">
                             <span class="text-xs text-teal-300"><strong class="text-slate-400">Rx:</strong> ${p.allocated_resource || 'None'}</span>
-                            <button onclick="openPrognosisModal('${p.patient_id}')" class="text-xs text-teal-400 hover:text-teal-300 font-semibold underline underline-offset-2">
-                                View Prognosis &rarr;
-                            </button>
+                            <div class="flex items-center gap-3">
+                                <button onclick="openDiagnosisModal('${p.patient_id}')" class="text-xs text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2">
+                                    Diagnosis
+                                </button>
+                                <button onclick="openPrognosisModal('${p.patient_id}')" class="text-xs text-teal-400 hover:text-teal-300 font-semibold underline underline-offset-2">
+                                    View Prognosis &rarr;
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1086,6 +1150,170 @@
 
         document.getElementById('btn-close-modal').addEventListener('click', () => {
             document.getElementById('modal-prognosis').classList.add('hidden');
+        });
+
+        // Diagnosis Upload & Care Plan Assistant Modal
+        let activeDiagnosisPatientId = null;
+        let diagnosisChatLogs = {};
+
+        async function openDiagnosisModal(patientId) {
+            const p = currentQueue.find(item => item.patient_id === patientId);
+            if (!p) return;
+
+            activeDiagnosisPatientId = patientId;
+
+            document.getElementById('diagnosis-modal-patient-name').textContent = `Diagnosis & Care Plan — ${p.name}`;
+            document.getElementById('diagnosis-modal-patient-meta').textContent = `ID: ${p.patient_id} • Age: ${p.age}`;
+
+            document.getElementById('input-diagnosis-text').value = '';
+            document.getElementById('input-diagnosis-care-plan').value = '';
+            document.getElementById('input-diagnosis-physician').value = '';
+            document.getElementById('diagnosis-save-status').textContent = '';
+            document.getElementById('diagnosis-current-text').textContent = 'Loading diagnosis record...';
+            document.getElementById('diagnosis-current-care-plan').textContent = '';
+
+            renderDiagnosisChatLog();
+
+            document.getElementById('modal-diagnosis').classList.remove('hidden');
+
+            try {
+                const res = await fetch(`/api/diagnosis?patient_id=${encodeURIComponent(patientId)}`);
+                const data = await res.json();
+                renderDiagnosisRecord(data.diagnosis);
+            } catch (e) {
+                document.getElementById('diagnosis-current-text').textContent = 'Unable to load diagnosis record at this time.';
+            }
+        }
+
+        function renderDiagnosisRecord(record) {
+            const textEl = document.getElementById('diagnosis-current-text');
+            const planEl = document.getElementById('diagnosis-current-care-plan');
+
+            if (!record || !record.diagnosis_text) {
+                textEl.textContent = 'No diagnosis has been uploaded for this patient yet.';
+                planEl.textContent = '';
+                return;
+            }
+
+            textEl.textContent = record.diagnosis_text;
+            planEl.innerHTML = record.care_plan
+                ? `<strong class="text-slate-200">Care Plan:</strong> ${record.care_plan}`
+                : '';
+
+            if (record.physician_name) {
+                planEl.innerHTML += `<div class="text-[10px] text-slate-500 mt-2">Recorded by ${record.physician_name}</div>`;
+            }
+        }
+
+        document.getElementById('btn-close-diagnosis-modal').addEventListener('click', () => {
+            document.getElementById('modal-diagnosis').classList.add('hidden');
+        });
+
+        document.getElementById('btn-save-diagnosis').addEventListener('click', async () => {
+            if (!activeDiagnosisPatientId) return;
+
+            const diagnosisText = document.getElementById('input-diagnosis-text').value.trim();
+            const carePlan = document.getElementById('input-diagnosis-care-plan').value.trim();
+            const physicianName = document.getElementById('input-diagnosis-physician').value.trim();
+            const statusEl = document.getElementById('diagnosis-save-status');
+
+            if (!diagnosisText) {
+                statusEl.textContent = 'A diagnosis is required before saving.';
+                statusEl.className = 'text-[10px] text-rose-400';
+                return;
+            }
+
+            statusEl.textContent = 'Saving...';
+            statusEl.className = 'text-[10px] text-slate-500';
+
+            try {
+                const res = await fetch('/api/diagnosis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        patient_id: activeDiagnosisPatientId,
+                        diagnosis_text: diagnosisText,
+                        care_plan: carePlan,
+                        physician_name: physicianName
+                    })
+                });
+                const data = await res.json();
+                if (data.diagnosis) {
+                    renderDiagnosisRecord(data.diagnosis);
+                    statusEl.textContent = 'Diagnosis uploaded to record successfully.';
+                    statusEl.className = 'text-[10px] text-teal-400';
+                } else {
+                    statusEl.textContent = data.error || 'Unable to save diagnosis.';
+                    statusEl.className = 'text-[10px] text-rose-400';
+                }
+            } catch (e) {
+                statusEl.textContent = 'Unable to save diagnosis at this time.';
+                statusEl.className = 'text-[10px] text-rose-400';
+            }
+        });
+
+        function renderDiagnosisChatLog() {
+            const container = document.getElementById('diagnosis-chat-log');
+            const logs = diagnosisChatLogs[activeDiagnosisPatientId] || [];
+
+            if (logs.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 text-center py-4">No questions asked yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = logs.map(entry => `
+                <div class="space-y-1">
+                    <div class="flex justify-end">
+                        <div class="px-3 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-100 max-w-[85%]">${entry.question}</div>
+                    </div>
+                    <div class="flex justify-start">
+                        <div class="px-3 py-2 rounded-xl bg-white/5 border border-white/5 text-slate-200 max-w-[85%] leading-relaxed">${entry.answer}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function submitDiagnosisQuestion() {
+            if (!activeDiagnosisPatientId) return;
+            const input = document.getElementById('input-diagnosis-question');
+            const question = input.value.trim();
+            if (!question) return;
+
+            const askBtn = document.getElementById('btn-ask-diagnosis');
+            askBtn.disabled = true;
+            input.value = '';
+
+            if (!diagnosisChatLogs[activeDiagnosisPatientId]) {
+                diagnosisChatLogs[activeDiagnosisPatientId] = [];
+            }
+            const pendingEntry = { question: question, answer: '<span class="text-slate-500 animate-pulse">Care Plan Assistant is preparing a response...</span>' };
+            diagnosisChatLogs[activeDiagnosisPatientId].push(pendingEntry);
+            renderDiagnosisChatLog();
+
+            try {
+                const res = await fetch('/api/diagnosis-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ patient_id: activeDiagnosisPatientId, question: question })
+                });
+                const data = await res.json();
+                pendingEntry.answer = data.answer || data.error || 'Unable to retrieve a response at this time.';
+            } catch (e) {
+                pendingEntry.answer = 'Unable to reach the Care Plan Assistant at this time.';
+            } finally {
+                renderDiagnosisChatLog();
+                askBtn.disabled = false;
+            }
+        }
+
+        document.getElementById('btn-ask-diagnosis').addEventListener('click', submitDiagnosisQuestion);
+        document.getElementById('input-diagnosis-question').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitDiagnosisQuestion();
+            }
         });
 
         // Vision Multimodal Portal Logic

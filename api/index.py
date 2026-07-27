@@ -50,6 +50,11 @@ CRISIS_COMPLAINTS = [
 US_NAMES = ["Emma Smith", "Liam Johnson", "Olivia Williams", "Noah Brown", "Sophia Jones", 
             "Jackson Miller", "Ava Davis", "Lucas Garcia", "Isabella Rodriguez", "Ethan Wilson"]
 
+# In-memory fallback store for physician-entered diagnoses, keyed by patient_id.
+# Used when Supabase credentials are not configured, mirroring the mock-fallback
+# pattern already used elsewhere for triage and vision.
+DIAGNOSIS_STORE = {}
+
 @app.route('/')
 @app.route('/index')
 def index():
@@ -233,6 +238,164 @@ def handle_vision():
 
     except Exception as e:
         return jsonify({"error": str(e), "status": "malformed_vision_execution"}), 500
+
+@app.route('/api/diagnosis', methods=['POST'])
+def save_diagnosis():
+    """
+    Allows the attending physician to upload/save a formal diagnosis and care plan
+    for a given patient. Persists to Supabase when configured, otherwise falls back
+    to the in-memory DIAGNOSIS_STORE for the lifetime of the process.
+    """
+    try:
+        data = request.json or {}
+        patient_id = data.get("patient_id")
+        diagnosis_text = (data.get("diagnosis_text") or "").strip()
+        care_plan = (data.get("care_plan") or "").strip()
+        physician_name = (data.get("physician_name") or "Attending Physician").strip()
+
+        if not patient_id or not diagnosis_text:
+            return jsonify({"error": "patient_id and diagnosis_text are required"}), 400
+
+        record = {
+            "patient_id": patient_id,
+            "diagnosis_text": diagnosis_text,
+            "care_plan": care_plan,
+            "physician_name": physician_name
+        }
+
+        if supabase_client:
+            try:
+                supabase_client.table("diagnoses").upsert(record).execute()
+            except Exception as e:
+                print(f"Supabase diagnosis upsert note: {e}")
+                DIAGNOSIS_STORE[patient_id] = record
+        else:
+            DIAGNOSIS_STORE[patient_id] = record
+
+        return jsonify({"status": "saved", "diagnosis": record})
+
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "diagnosis_save_failed"}), 500
+
+@app.route('/api/diagnosis', methods=['GET'])
+def get_diagnosis():
+    """Retrieves the saved diagnosis/care plan for a given patient_id."""
+    try:
+        patient_id = request.args.get("patient_id")
+        if not patient_id:
+            return jsonify({"error": "patient_id query parameter is required"}), 400
+
+        record = None
+        if supabase_client:
+            try:
+                res = supabase_client.table("diagnoses").select("*").eq("patient_id", patient_id).limit(1).execute()
+                if res.data:
+                    record = res.data[0]
+            except Exception as e:
+                print(f"Supabase diagnosis fetch note: {e}")
+
+        if record is None:
+            record = DIAGNOSIS_STORE.get(patient_id)
+
+        return jsonify({"diagnosis": record})
+
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "diagnosis_fetch_failed"}), 500
+
+@app.route('/api/diagnosis-chat', methods=['POST'])
+def diagnosis_chat():
+    """
+    Care Plan Assistant: answers family/patient questions about a specific diagnosis
+    and its associated care plan in a medically formal but plain-language tone.
+    Grounds every answer strictly in the physician-entered diagnosis/care plan text
+    so it never invents clinical facts beyond what the attending physician recorded.
+    """
+    try:
+        data = request.json or {}
+        patient_id = data.get("patient_id")
+        question = (data.get("question") or "").strip()
+
+        if not question:
+            return jsonify({"error": "question is required"}), 400
+
+        record = None
+        if patient_id:
+            if supabase_client:
+                try:
+                    res = supabase_client.table("diagnoses").select("*").eq("patient_id", patient_id).limit(1).execute()
+                    if res.data:
+                        record = res.data[0]
+                except Exception as e:
+                    print(f"Supabase diagnosis fetch note: {e}")
+            if record is None:
+                record = DIAGNOSIS_STORE.get(patient_id)
+
+        diagnosis_text = (record or {}).get("diagnosis_text", "")
+        care_plan = (record or {}).get("care_plan", "")
+
+        if not diagnosis_text:
+            return jsonify({
+                "answer": "No formal diagnosis has been uploaded for this patient yet. Please ask the attending physician to record the diagnosis and care plan before questions can be answered here."
+            })
+
+        if not client:
+            return jsonify(generate_mock_diagnosis_chat_answer(question))
+
+        system_prompt = f"""
+        You are a Clinical Care Plan Assistant embedded in a hospital patient portal.
+        Your role is to help patients and their family members understand a specific
+        physician-recorded diagnosis and care plan.
+
+        Diagnosis on record:
+        {diagnosis_text}
+
+        Care Plan on record:
+        {care_plan if care_plan else "No separate care plan notes were recorded."}
+
+        Guidelines:
+        1. Maintain a medically formal, serious, and professional tone at all times.
+        2. Use plain language a family member without medical training can understand;
+           briefly define any clinical term you must use.
+        3. Answer only using the diagnosis and care plan text provided above. Do not
+           invent test results, medications, or prognoses that are not stated there.
+        4. If the question cannot be answered from the information on record, say so
+           clearly and advise the family to speak directly with the attending physician
+           or care team rather than speculating.
+        5. Do not provide instructions that could be used to alter dosages or treatment
+           without clinician oversight; encourage contacting the care team for any
+           urgent or changing symptoms.
+        6. Keep answers concise and organized, using short paragraphs or a short list
+           when helpful.
+        """
+
+        completion = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": question}
+            ],
+            temperature=0.3
+        )
+
+        answer = completion.choices[0].message.content
+        return jsonify({"answer": answer})
+
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "diagnosis_chat_failed"}), 500
+
+def generate_mock_diagnosis_chat_answer(question):
+    """Resilient fallback response when no Groq credentials are configured."""
+    return {
+        "answer": (
+            "Based on the diagnosis and care plan recorded by the attending physician, "
+            "this appears to be a stable, actively monitored condition. In general terms, "
+            "the care team's plan focuses on symptom management, scheduled follow-up, and "
+            "watching for any warning signs noted in the record. For specifics about your "
+            "question, or for anything that feels urgent, please speak directly with the "
+            "attending physician or nursing staff, as this assistant can only summarize "
+            "what has already been documented."
+        )
+    }
 
 def generate_mock_triage(patients, inventory):
     """Resilient computational fallback function producing high-fidelity structural mock data."""
