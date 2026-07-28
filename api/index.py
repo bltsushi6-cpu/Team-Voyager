@@ -55,6 +55,21 @@ US_NAMES = ["Emma Smith", "Liam Johnson", "Olivia Williams", "Noah Brown", "Soph
 # pattern already used elsewhere for triage and vision.
 DIAGNOSIS_STORE = {}
 
+# Locally-detected red-flag phrases for the At-Home Symptom Checker. These act as a
+# server-side safety net: if any of these appear in the user's own words, the
+# response is forced to "Emergency" urgency regardless of what the AI model returns.
+EMERGENCY_KEYWORDS = [
+    "chest pain", "can't breathe", "cannot breathe", "difficulty breathing",
+    "trouble breathing", "shortness of breath", "severe bleeding",
+    "uncontrolled bleeding", "unconscious", "unresponsive", "stroke",
+    "slurred speech", "facial droop", "face drooping", "one side of my body",
+    "one side weak", "suicidal", "want to die", "kill myself", "overdose",
+    "anaphylaxis", "throat swelling", "throat closing", "can't swallow",
+    "severe allergic reaction", "seizure", "coughing up blood", "blue lips",
+    "crushing pressure", "worst headache of my life", "not breathing",
+    "no pulse", "poisoning", "severe burn"
+]
+
 @app.route('/')
 @app.route('/index')
 def index():
@@ -394,6 +409,252 @@ def generate_mock_diagnosis_chat_answer(question):
             "question, or for anything that feels urgent, please speak directly with the "
             "attending physician or nursing staff, as this assistant can only summarize "
             "what has already been documented."
+        )
+    }
+
+@app.route('/api/symptom-check', methods=['POST'])
+def handle_symptom_check():
+    """
+    At-Home Symptom Checker: accepts a free-text description of symptoms/situation from
+    a patient or caregiver at home and returns an educational, triage-style assessment:
+    possible explanations, an urgency level for seeking in-person care, any red-flag
+    warning signs detected, and a recommended next action. This is an educational aid
+    only, never a definitive diagnosis, and never a substitute for calling 911 or going
+    to the nearest emergency room in a true emergency.
+    """
+    try:
+        data = request.json or {}
+        symptoms_text = (data.get("symptoms") or "").strip()
+        age = (data.get("age") or "").strip() if isinstance(data.get("age"), str) else data.get("age")
+        context_notes = (data.get("context") or "").strip()
+
+        if not symptoms_text:
+            return jsonify({"error": "Please describe the symptoms or situation."}), 400
+
+        lowered = symptoms_text.lower()
+        detected_red_flags = [kw for kw in EMERGENCY_KEYWORDS if kw in lowered]
+
+        if not client:
+            return jsonify(generate_mock_symptom_check(symptoms_text, detected_red_flags))
+
+        prompt = f"""
+        You are an educational At-Home Symptom Triage Assistant embedded in a US consumer
+        health website. You are NOT a physician and you do NOT provide a definitive medical
+        diagnosis. Your purpose is to help an at-home user understand possible explanations
+        for their symptoms in plain language and, most importantly, how urgently they should
+        seek in-person medical care.
+
+        Patient-reported symptoms/situation:
+        "{symptoms_text}"
+
+        Additional context provided (may be empty): "{context_notes}"
+        Reported age (may be empty): "{age if age else 'not provided'}"
+
+        Guidelines:
+        1. Never claim certainty. Use language like "possible explanations may include" rather
+           than declaring a definitive diagnosis.
+        2. Assign an urgency_level from exactly one of these four values:
+           "Emergency" (call 911 or go to the ER immediately), "Urgent" (seek care within a
+           few hours at an urgent care or ER), "Soon" (see a doctor within 1-2 days),
+           "Self-Care" (home monitoring and OTC measures are reasonable, watch for worsening).
+        3. If ANY life-threatening red-flag symptom is present (for example: chest pain,
+           trouble breathing, stroke signs, severe uncontrolled bleeding, anaphylaxis,
+           suicidal ideation, unresponsiveness, severe allergic reaction), you MUST set
+           urgency_level to "Emergency" regardless of other factors.
+        4. List 2-4 possible_conditions, each with a short plain-language name and a 1-2
+           sentence description. Do not include probability percentages; order from most to
+           least likely instead.
+        5. List any red_flags detected in the user's own description, in plain language.
+        6. Provide a short recommended_action paragraph telling the user concretely what to
+           do next (e.g. "Call 911 now", "Go to urgent care today", "Schedule a doctor visit
+           this week", "Rest, hydrate, and monitor; seek care if symptoms worsen").
+        7. Always include a disclaimer field reminding the user this is educational
+           information only, not a diagnosis, and that emergencies require calling 911 or
+           going to the nearest ER.
+        8. Return ONLY a valid JSON object matching the schema below. Do not add
+           conversational text or markdown blocks.
+
+        Output Schema Template:
+        {{
+          "urgency_level": "Emergency" or "Urgent" or "Soon" or "Self-Care",
+          "headline_summary": "string",
+          "possible_conditions": [
+            {{"name": "string", "description": "string"}}
+          ],
+          "red_flags": ["string"],
+          "recommended_action": "string",
+          "disclaimer": "string"
+        }}
+        """
+
+        completion = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"},
+            temperature=0.3
+        )
+
+        parsed_result = json.loads(completion.choices[0].message.content)
+
+        # Server-side safety net: force Emergency urgency if a red-flag keyword was
+        # detected locally in the user's own words, even if the model did not flag it.
+        if detected_red_flags and parsed_result.get("urgency_level") != "Emergency":
+            parsed_result["urgency_level"] = "Emergency"
+            existing_flags = parsed_result.get("red_flags") or []
+            parsed_result["red_flags"] = list(set(existing_flags + detected_red_flags))
+
+        return jsonify(parsed_result)
+
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "symptom_check_failed"}), 500
+
+@app.route('/api/symptom-chat', methods=['POST'])
+def symptom_chat():
+    """
+    At-Home Symptom Assistant chat: answers follow-up questions from the user about the
+    symptom-check assessment already shown to them, in plain language, while reinforcing
+    the urgency guidance and emergency safety net already established. Grounded in the
+    original symptoms and assessment sent by the client for each turn.
+    """
+    try:
+        data = request.json or {}
+        question = (data.get("question") or "").strip()
+        symptoms_text = (data.get("symptoms") or "").strip()
+        assessment = data.get("assessment") or {}
+
+        if not question:
+            return jsonify({"error": "question is required"}), 400
+
+        lowered_question = question.lower()
+        question_red_flags = [kw for kw in EMERGENCY_KEYWORDS if kw in lowered_question]
+
+        if not client:
+            return jsonify(generate_mock_symptom_chat_answer(question, assessment, question_red_flags))
+
+        system_prompt = f"""
+        You are an At-Home Symptom Assistant on a consumer health website. You help a
+        patient or caregiver understand a symptom-check assessment that was already
+        generated for them, shown below. You are NOT a physician and must never provide a
+        definitive diagnosis or specific medication dosing instructions.
+
+        Original reported symptoms: "{symptoms_text}"
+        Assessment already shown to the user: {json.dumps(assessment)}
+
+        Guidelines:
+        1. Keep a warm, clear, plain-language tone suitable for a worried patient or family
+           member.
+        2. Ground your answer in the assessment above; do not contradict its urgency_level.
+           If the user describes a new or worsening symptom that sounds like a red-flag
+           emergency (chest pain, trouble breathing, stroke signs, severe bleeding,
+           suicidal thoughts, anaphylaxis, unresponsiveness), tell them clearly to call 911
+           or go to the nearest emergency room immediately.
+        3. Do not provide specific medication dosing instructions; general OTC category
+           mentions (e.g. "an OTC pain reliever") are fine, but defer exact dosing questions
+           to a pharmacist or doctor.
+        4. If you cannot answer confidently from general medical knowledge, say so and
+           recommend contacting a doctor, pharmacist, or telehealth service.
+        5. Keep answers concise, using short paragraphs or a short list when helpful.
+        6. End every answer with a brief reminder that this is educational information only
+           and not a substitute for professional medical evaluation.
+        """
+
+        completion = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": question}
+            ],
+            temperature=0.3
+        )
+
+        answer = completion.choices[0].message.content
+
+        if question_red_flags:
+            answer = "**If this is an emergency, call 911 or go to the nearest ER immediately.**\n\n" + answer
+
+        return jsonify({"answer": answer})
+
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "symptom_chat_failed"}), 500
+
+def generate_mock_symptom_check(symptoms_text, detected_red_flags):
+    """Resilient fallback assessment when no Groq credentials are configured."""
+    lowered = symptoms_text.lower()
+
+    if detected_red_flags:
+        return {
+            "urgency_level": "Emergency",
+            "headline_summary": "Some of the details you shared can indicate a medical emergency.",
+            "possible_conditions": [
+                {
+                    "name": "Potential emergency medical condition",
+                    "description": "The symptoms you described can be associated with a serious or life-threatening condition that needs immediate evaluation."
+                }
+            ],
+            "red_flags": detected_red_flags,
+            "recommended_action": "Call 911 or your local emergency number right away, or go to the nearest emergency room immediately. Do not drive yourself if you feel faint, short of breath, or in severe pain.",
+            "disclaimer": "This tool provides general educational information only and is not a medical diagnosis. Always call 911 or go to the nearest emergency room for a possible emergency."
+        }
+
+    if "fever" in lowered or "cough" in lowered:
+        conditions = [
+            {"name": "Common viral upper respiratory infection", "description": "A cold or flu-like illness often causes fever, cough, and fatigue and typically improves with rest and fluids."},
+            {"name": "Bacterial respiratory infection", "description": "Less commonly, a bacterial infection such as bronchitis or pneumonia can cause similar symptoms and may need antibiotics."}
+        ]
+        urgency = "Soon"
+        action = "Rest, stay hydrated, and monitor your temperature. See a doctor within the next 1-2 days if fever persists beyond 3 days, or sooner if you develop shortness of breath or chest pain."
+    elif "rash" in lowered or "itch" in lowered:
+        conditions = [
+            {"name": "Mild allergic or irritant skin reaction", "description": "Contact with an irritant or allergen can cause localized redness, itching, and mild swelling."},
+            {"name": "Common dermatologic condition", "description": "Conditions such as eczema or hives can also present with itching and rash."}
+        ]
+        urgency = "Self-Care"
+        action = "Avoid scratching, apply a cool compress, and consider an OTC antihistamine if appropriate for you. Seek care if the rash spreads rapidly, blisters, or is accompanied by facial swelling or trouble breathing."
+    elif "headache" in lowered:
+        conditions = [
+            {"name": "Tension-type headache", "description": "Stress, dehydration, or eye strain commonly cause a dull, pressure-like headache."},
+            {"name": "Migraine", "description": "Migraines can cause moderate-to-severe throbbing pain, often with light sensitivity or nausea."}
+        ]
+        urgency = "Self-Care"
+        action = "Rest in a quiet, dark room, stay hydrated, and consider an OTC pain reliever if appropriate for you. Seek immediate care for a sudden, severe 'worst headache of your life,' a headache with fever and stiff neck, or a headache after a head injury."
+    else:
+        conditions = [
+            {"name": "Common, self-limited condition", "description": "Based on a general description, many mild symptoms resolve on their own with rest and home care."}
+        ]
+        urgency = "Self-Care"
+        action = "Monitor your symptoms at home, rest, and stay hydrated. Contact a doctor if symptoms persist beyond a few days or worsen."
+
+    return {
+        "urgency_level": urgency,
+        "headline_summary": "Here is some general educational information based on what you described.",
+        "possible_conditions": conditions,
+        "red_flags": [],
+        "recommended_action": action,
+        "disclaimer": "This tool provides general educational information only and is not a medical diagnosis. If your symptoms are severe or you are ever unsure, contact a doctor or call 911."
+    }
+
+def generate_mock_symptom_chat_answer(question, assessment, question_red_flags):
+    """Resilient fallback response when no Groq credentials are configured."""
+    if question_red_flags:
+        return {
+            "answer": (
+                "**If this is an emergency, call 911 or go to the nearest ER immediately.** "
+                "What you're describing includes symptoms that can be serious, so please don't "
+                "wait for an online tool's response before getting in-person help.\n\n"
+                "This assistant provides general educational information only and is not a "
+                "substitute for professional medical evaluation."
+            )
+        }
+
+    urgency = assessment.get("urgency_level", "Self-Care") if isinstance(assessment, dict) else "Self-Care"
+    return {
+        "answer": (
+            f"Based on the assessment already shown to you (urgency level: {urgency}), the general "
+            "guidance is to follow the recommended action above and monitor how you feel. If your "
+            "symptoms change, worsen, or something new and severe develops, it's best to contact a "
+            "doctor or, for any emergency warning signs, call 911.\n\n"
+            "This assistant provides general educational information only and is not a substitute "
+            "for professional medical evaluation."
         )
     }
 
