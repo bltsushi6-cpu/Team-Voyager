@@ -317,6 +317,11 @@
                         Patient Intake &amp; Triage
                     </button>
 
+                    <button id="nav-patients" onclick="switchSection('panel-patients')" class="nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all border border-transparent flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-4.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>
+                        Patient Database
+                    </button>
+
                     <button id="nav-inventory" onclick="switchSection('panel-inventory')" class="nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all border border-transparent flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                         Bio-Resource Inventory
@@ -348,6 +353,17 @@
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
             <section id="panel-overview" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div onclick="switchSection('panel-patients')" class="glass-panel p-6 rounded-2xl glass-card-hover cursor-pointer border-l-4 border-l-indigo-500">
+                        <div class="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 w-fit mb-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-4.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Patient Database</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                            Search persistent patient records, open a full profile with contact and emergency-contact info, and review prior ER visits and triage summaries.
+                        </p>
+                        <span class="text-xs text-indigo-400 font-semibold flex items-center gap-1">Open Patient Records &rarr;</span>
+                    </div>
+
                     <div onclick="switchSection('panel-triage')" class="glass-panel p-6 rounded-2xl glass-card-hover cursor-pointer border-l-4 border-l-teal-500">
                         <div class="p-3 rounded-xl bg-teal-500/10 text-teal-400 w-fit mb-4">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
@@ -736,6 +752,165 @@
                     </div>
                 </div>
             </section>
+
+            <section id="panel-patients" class="space-y-6 hidden">
+                <div class="glass-panel p-6 rounded-2xl space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+                        <div>
+                            <h3 class="font-bold text-white text-base">Patient Database</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Persistent patient records — search prior visits, or add a new patient.</p>
+                        </div>
+                        <button id="btn-new-patient" type="button" class="py-2.5 px-4 bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold rounded-xl text-xs transition shadow-lg shadow-indigo-500/20 whitespace-nowrap">
+                            + Add New Patient
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <input id="input-patient-search" type="text" placeholder="Search by name or patient code (e.g. MRN-3F9A21B0)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                    </div>
+
+                    <div id="patients-list-container" class="space-y-2 min-h-[200px]">
+                        <div class="text-center py-12 text-slate-500 text-xs">Loading patient records...</div>
+                    </div>
+                </div>
+
+                <div id="new-patient-form" class="glass-panel p-6 rounded-2xl space-y-4 border border-indigo-500/30 hidden">
+                    <h3 class="font-bold text-white text-sm uppercase tracking-wider">Register New Patient</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Full Name *</label>
+                            <input id="np-full-name" type="text" placeholder="e.g. Jordan Reyes" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Age</label>
+                            <input id="np-age" type="number" placeholder="e.g. 42" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Gender</label>
+                            <input id="np-gender" type="text" placeholder="e.g. Female" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="btn-save-new-patient" type="button" class="py-2.5 px-4 bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold rounded-xl text-xs transition">
+                            Create Patient Record
+                        </button>
+                        <button id="btn-cancel-new-patient" type="button" class="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs transition">
+                            Cancel
+                        </button>
+                    </div>
+                    <div id="new-patient-status" class="text-[10px] text-slate-500"></div>
+                </div>
+            </section>
+
+            <section id="panel-patient-profile" class="space-y-6 hidden">
+                <button onclick="switchSection('panel-patients')" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/></svg>
+                    Back to Patient Database
+                </button>
+
+                <div class="glass-panel p-6 rounded-2xl">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 id="profile-patient-name" class="text-2xl font-extrabold text-white">--</h2>
+                            <p id="profile-patient-code" class="text-xs text-slate-400 font-mono mt-1">MRN-........</p>
+                        </div>
+                        <div id="profile-flags-display" class="flex flex-wrap gap-1.5 justify-end"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-5 space-y-6">
+                        <div class="glass-panel p-6 rounded-2xl space-y-4">
+                            <h3 class="font-bold text-white text-sm uppercase tracking-wider border-b border-white/10 pb-3">Demographics</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Full Name</label>
+                                    <input id="edit-full_name" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Age</label>
+                                    <input id="edit-age" type="number" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Gender</label>
+                                    <input id="edit-gender" type="text" placeholder="Not on file" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Date of Birth</label>
+                                    <input id="edit-date_of_birth" type="date" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-6 rounded-2xl space-y-4">
+                            <h3 class="font-bold text-white text-sm uppercase tracking-wider border-b border-white/10 pb-3">Contact Information</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Phone</label>
+                                    <input id="edit-phone" type="text" placeholder="Not on file" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Email</label>
+                                    <input id="edit-email" type="text" placeholder="Not on file" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Address</label>
+                                    <input id="edit-address" type="text" placeholder="Not on file" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-6 rounded-2xl space-y-4">
+                            <h3 class="font-bold text-white text-sm uppercase tracking-wider border-b border-white/10 pb-3">Emergency Contact</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Name</label>
+                                    <input id="edit-emergency_contact_name" type="text" placeholder="Not on file" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Phone</label>
+                                        <input id="edit-emergency_contact_phone" type="text" placeholder="Not on file" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Relationship</label>
+                                        <input id="edit-emergency_contact_relation" type="text" placeholder="Not on file" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-6 rounded-2xl space-y-4">
+                            <h3 class="font-bold text-white text-sm uppercase tracking-wider border-b border-white/10 pb-3">Flags &amp; Notes</h3>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Flags (comma-separated, e.g. "Allergy: Penicillin, Fall Risk")</label>
+                                <input id="edit-flags" type="text" placeholder="None on file" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Notes</label>
+                                <textarea id="edit-notes" rows="4" placeholder="No notes on file" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:border-indigo-400 focus:outline-none"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button id="btn-save-profile" type="button" class="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-slate-950 font-bold rounded-xl text-xs transition shadow-lg shadow-indigo-500/20">
+                                Save Changes
+                            </button>
+                            <span id="profile-save-status" class="text-[10px] text-slate-500"></span>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-white text-base">Visit History &amp; Triage Summaries</h3>
+                            <span id="visit-count" class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-lg">0 Visits</span>
+                        </div>
+                        <div id="patient-visits-container" class="space-y-3 min-h-[300px]">
+                            <div class="glass-panel p-12 rounded-2xl text-center text-slate-500 text-xs">No visits on record yet.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -801,6 +976,9 @@
                         Upload Diagnosis to Record
                     </button>
                     <div id="diagnosis-save-status" class="text-[10px] text-slate-500"></div>
+                    <button id="btn-save-diagnosis-to-patient" type="button" class="w-full py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold rounded-xl text-xs transition">
+                        Save This Diagnosis to Patient Record
+                    </button>
                 </div>
 
                 <div class="glass-card p-4 rounded-xl space-y-2 border border-white/5">
@@ -827,6 +1005,49 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="modal-confirm-changes" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
+        <div class="glass-panel max-w-md w-full rounded-3xl p-6 space-y-5 border border-amber-500/30 shadow-2xl">
+            <div class="flex items-center gap-3">
+                <div class="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <h3 class="text-base font-bold text-white">Confirm Multiple Changes</h3>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">You changed multiple fields on this patient's profile. Please review before saving:</p>
+            <div id="confirm-changes-list" class="space-y-2 max-h-64 overflow-y-auto pr-1 text-xs"></div>
+            <div class="flex gap-3 pt-2">
+                <button id="btn-confirm-save" type="button" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition">
+                    Confirm &amp; Save
+                </button>
+                <button id="btn-cancel-confirm-save" type="button" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs transition">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-link-patient" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
+        <div class="glass-panel max-w-lg w-full rounded-3xl p-6 space-y-5 border border-white/10 shadow-2xl max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-white">Save to Patient Record</h3>
+                <button id="btn-close-link-modal" class="text-slate-400 hover:text-white text-xl p-1 rounded-lg hover:bg-white/5 transition">&times;</button>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">Search for an existing patient to attach this record to, or quick-create a new patient.</p>
+
+            <input id="link-patient-search" type="text" placeholder="Search by name or patient code..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+            <div id="link-patient-results" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+
+            <div class="pt-3 border-t border-white/10 space-y-3">
+                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Or Quick-Create New Patient</h4>
+                <input id="link-new-patient-name" type="text" placeholder="Full name" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none" />
+                <button id="btn-link-create-patient" type="button" class="w-full py-2.5 bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold rounded-xl text-xs transition">
+                    Create &amp; Attach Record
+                </button>
+            </div>
+            <div id="link-patient-status" class="text-[10px] text-slate-500"></div>
         </div>
     </div>
 
@@ -1010,12 +1231,12 @@
 
         // Core UI Navigation
         function switchSection(sectionId) {
-            ['panel-overview', 'panel-triage', 'panel-inventory', 'panel-vision', 'panel-symptom'].forEach(id => {
+            ['panel-overview', 'panel-triage', 'panel-patients', 'panel-patient-profile', 'panel-inventory', 'panel-vision', 'panel-symptom'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             });
             document.getElementById(sectionId).classList.remove('hidden');
 
-            ['nav-overview', 'nav-triage', 'nav-inventory', 'nav-vision', 'nav-symptom'].forEach(navId => {
+            ['nav-overview', 'nav-triage', 'nav-patients', 'nav-inventory', 'nav-vision', 'nav-symptom'].forEach(navId => {
                 const btn = document.getElementById(navId);
                 btn.className = "nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all border border-transparent flex items-center gap-2";
             });
@@ -1023,6 +1244,8 @@
             const activeNavMap = {
                 'panel-overview': 'nav-overview',
                 'panel-triage': 'nav-triage',
+                'panel-patients': 'nav-patients',
+                'panel-patient-profile': 'nav-patients',
                 'panel-inventory': 'nav-inventory',
                 'panel-vision': 'nav-vision',
                 'panel-symptom': 'nav-symptom'
@@ -1030,6 +1253,10 @@
             const activeNav = document.getElementById(activeNavMap[sectionId]);
             if (activeNav) {
                 activeNav.className = "nav-tab px-4 py-2 rounded-lg text-xs font-semibold transition-all border border-teal-500/30 bg-teal-500/10 text-teal-400 flex items-center gap-2";
+            }
+
+            if (sectionId === 'panel-patients') {
+                fetchPatients();
             }
         }
 
@@ -1177,6 +1404,9 @@
                         <div class="flex items-center justify-between pt-2 border-t border-white/5">
                             <span class="text-xs text-teal-300"><strong class="text-slate-400">Rx:</strong> ${p.allocated_resource || 'None'}</span>
                             <div class="flex items-center gap-3">
+                                <button onclick='openLinkPatientModal({source: "triage", patient_id: "${p.patient_id}"})' class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2">
+                                    Save to Patient
+                                </button>
                                 <button onclick="openDiagnosisModal('${p.patient_id}')" class="text-xs text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2">
                                     Diagnosis
                                 </button>
@@ -1690,6 +1920,474 @@
                 e.preventDefault();
                 submitSymptomQuestion();
             }
+        });
+
+        // ===================== Patient Database Logic =====================
+        let currentPatientsList = [];
+        let currentProfilePatient = null;
+        let currentProfileVisits = [];
+        let pendingProfileChanges = null;
+        let pendingLinkPayload = null;
+        let linkSearchResults = [];
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function fetchPatients() {
+            const container = document.getElementById('patients-list-container');
+            const query = document.getElementById('input-patient-search').value.trim();
+            container.innerHTML = `<div class="text-center py-12 text-slate-500 text-xs animate-pulse">Loading patient records...</div>`;
+            try {
+                const res = await fetch(`/api/patients?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                currentPatientsList = data.patients || [];
+                renderPatientsList(currentPatientsList);
+            } catch (e) {
+                container.innerHTML = `<div class="text-center py-12 text-rose-400 text-xs">Unable to load patient records at this time.</div>`;
+            }
+        }
+
+        function renderPatientsList(patients) {
+            const container = document.getElementById('patients-list-container');
+            if (!patients.length) {
+                container.innerHTML = `<div class="glass-panel p-12 rounded-2xl text-center text-slate-500 text-xs">No patients found. Add a new patient to get started.</div>`;
+                return;
+            }
+            container.innerHTML = patients.map(p => `
+                <div onclick="openPatientProfile('${p.patient_code}')" class="glass-card glass-card-hover p-4 rounded-xl cursor-pointer flex items-center justify-between gap-4 cascade-item">
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-bold text-white text-sm">${escapeHtml(p.full_name)}</span>
+                            <span class="text-xs text-slate-500 font-mono">${escapeHtml(p.patient_code)}</span>
+                        </div>
+                        <div class="text-xs text-slate-400 mt-1">${p.age ? p.age + ' yrs' : 'Age —'} &bull; ${p.gender ? escapeHtml(p.gender) : 'Gender —'} &bull; ${p.phone ? escapeHtml(p.phone) : 'No phone on file'}</div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 justify-end max-w-[45%]">
+                        ${(p.flags || []).slice(0, 3).map(f => `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">${escapeHtml(f)}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('input-patient-search').addEventListener('input', () => {
+            clearTimeout(window._patientSearchDebounce);
+            window._patientSearchDebounce = setTimeout(fetchPatients, 300);
+        });
+
+        document.getElementById('btn-new-patient').addEventListener('click', () => {
+            document.getElementById('new-patient-form').classList.toggle('hidden');
+        });
+
+        document.getElementById('btn-cancel-new-patient').addEventListener('click', () => {
+            document.getElementById('new-patient-form').classList.add('hidden');
+            document.getElementById('np-full-name').value = '';
+            document.getElementById('np-age').value = '';
+            document.getElementById('np-gender').value = '';
+            document.getElementById('new-patient-status').textContent = '';
+        });
+
+        document.getElementById('btn-save-new-patient').addEventListener('click', async () => {
+            const fullName = document.getElementById('np-full-name').value.trim();
+            const statusEl = document.getElementById('new-patient-status');
+            if (!fullName) {
+                statusEl.textContent = 'Full name is required.';
+                statusEl.className = 'text-[10px] text-rose-400';
+                return;
+            }
+            const age = document.getElementById('np-age').value;
+            const gender = document.getElementById('np-gender').value.trim();
+            statusEl.textContent = 'Creating patient record...';
+            statusEl.className = 'text-[10px] text-slate-500';
+            try {
+                const res = await fetch('/api/patients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ full_name: fullName, age: age ? parseInt(age) : null, gender: gender || null })
+                });
+                const data = await res.json();
+                if (data.patient) {
+                    document.getElementById('new-patient-form').classList.add('hidden');
+                    document.getElementById('np-full-name').value = '';
+                    document.getElementById('np-age').value = '';
+                    document.getElementById('np-gender').value = '';
+                    statusEl.textContent = '';
+                    fetchPatients();
+                    openPatientProfile(data.patient.patient_code);
+                } else {
+                    statusEl.textContent = data.error || 'Unable to create patient.';
+                    statusEl.className = 'text-[10px] text-rose-400';
+                }
+            } catch (e) {
+                statusEl.textContent = 'Unable to create patient at this time.';
+                statusEl.className = 'text-[10px] text-rose-400';
+            }
+        });
+
+        const PROFILE_FIELDS = ['full_name', 'age', 'gender', 'date_of_birth', 'phone', 'email', 'address',
+            'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation', 'flags', 'notes'];
+
+        const PROFILE_FIELD_LABELS = {
+            full_name: 'Full Name', age: 'Age', gender: 'Gender', date_of_birth: 'Date of Birth',
+            phone: 'Phone', email: 'Email', address: 'Address',
+            emergency_contact_name: 'Emergency Contact Name', emergency_contact_phone: 'Emergency Contact Phone',
+            emergency_contact_relation: 'Emergency Contact Relationship', flags: 'Flags', notes: 'Notes'
+        };
+
+        function getFieldValueFromInput(field) {
+            const el = document.getElementById(`edit-${field}`);
+            return el ? el.value.trim() : '';
+        }
+
+        function getFieldValueFromPatient(field, patient) {
+            if (field === 'flags') {
+                return (patient.flags || []).join(', ');
+            }
+            const val = patient[field];
+            return (val === null || val === undefined) ? '' : String(val);
+        }
+
+        async function openPatientProfile(code) {
+            switchSection('panel-patient-profile');
+            document.getElementById('profile-patient-name').textContent = 'Loading...';
+            document.getElementById('profile-patient-code').textContent = code;
+            document.getElementById('profile-save-status').textContent = '';
+
+            try {
+                const res = await fetch(`/api/patients/${encodeURIComponent(code)}`);
+                const data = await res.json();
+                if (!data.patient) {
+                    document.getElementById('profile-patient-name').textContent = 'Patient Not Found';
+                    return;
+                }
+                currentProfilePatient = data.patient;
+                currentProfileVisits = data.visits || [];
+                populateProfileForm(currentProfilePatient);
+                renderVisitHistory(currentProfileVisits);
+            } catch (e) {
+                document.getElementById('profile-patient-name').textContent = 'Unable to load profile';
+            }
+        }
+
+        function populateProfileForm(patient) {
+            document.getElementById('profile-patient-name').textContent = patient.full_name || 'Unnamed Patient';
+            document.getElementById('profile-patient-code').textContent = patient.patient_code;
+
+            PROFILE_FIELDS.forEach(field => {
+                const el = document.getElementById(`edit-${field}`);
+                if (el) el.value = getFieldValueFromPatient(field, patient);
+            });
+
+            const flagsContainer = document.getElementById('profile-flags-display');
+            const flags = patient.flags || [];
+            flagsContainer.innerHTML = flags.length
+                ? flags.map(f => `<span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">${escapeHtml(f)}</span>`).join('')
+                : `<span class="text-xs text-slate-500">No flags on file</span>`;
+        }
+
+        document.getElementById('btn-save-profile').addEventListener('click', () => {
+            if (!currentProfilePatient) return;
+
+            const changedFields = {};
+            PROFILE_FIELDS.forEach(field => {
+                const currentVal = getFieldValueFromInput(field);
+                const originalVal = getFieldValueFromPatient(field, currentProfilePatient);
+                if (currentVal !== originalVal) {
+                    changedFields[field] = currentVal;
+                }
+            });
+
+            const changedKeys = Object.keys(changedFields);
+            const statusEl = document.getElementById('profile-save-status');
+
+            if (changedKeys.length === 0) {
+                statusEl.textContent = 'No changes to save.';
+                statusEl.className = 'text-[10px] text-slate-500';
+                return;
+            }
+
+            if (changedKeys.length >= 2) {
+                showConfirmChangesModal(changedFields, changedKeys);
+            } else {
+                commitProfileSave(changedFields);
+            }
+        });
+
+        function showConfirmChangesModal(changedFields, changedKeys) {
+            const listContainer = document.getElementById('confirm-changes-list');
+            listContainer.innerHTML = changedKeys.map(field => {
+                const label = PROFILE_FIELD_LABELS[field] || field;
+                const oldVal = getFieldValueFromPatient(field, currentProfilePatient) || '(empty)';
+                const newVal = changedFields[field] || '(empty)';
+                return `
+                    <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                        <div class="text-slate-300 font-semibold mb-1">${escapeHtml(label)}</div>
+                        <div class="text-slate-500 line-through">${escapeHtml(oldVal)}</div>
+                        <div class="text-amber-300">${escapeHtml(newVal)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            pendingProfileChanges = changedFields;
+            document.getElementById('modal-confirm-changes').classList.remove('hidden');
+        }
+
+        document.getElementById('btn-cancel-confirm-save').addEventListener('click', () => {
+            pendingProfileChanges = null;
+            document.getElementById('modal-confirm-changes').classList.add('hidden');
+        });
+
+        document.getElementById('btn-confirm-save').addEventListener('click', () => {
+            if (pendingProfileChanges) {
+                commitProfileSave(pendingProfileChanges);
+            }
+            document.getElementById('modal-confirm-changes').classList.add('hidden');
+        });
+
+        async function commitProfileSave(changedFields) {
+            const statusEl = document.getElementById('profile-save-status');
+            statusEl.textContent = 'Saving...';
+            statusEl.className = 'text-[10px] text-slate-500';
+
+            const payload = { ...changedFields };
+            if ('age' in payload) payload.age = payload.age ? parseInt(payload.age) : null;
+            if ('flags' in payload) payload.flags = payload.flags ? payload.flags.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            try {
+                const res = await fetch(`/api/patients/${encodeURIComponent(currentProfilePatient.patient_code)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.patient) {
+                    currentProfilePatient = data.patient;
+                    populateProfileForm(currentProfilePatient);
+                    statusEl.textContent = 'Changes saved successfully.';
+                    statusEl.className = 'text-[10px] text-teal-400';
+                } else {
+                    statusEl.textContent = data.error || 'Unable to save changes.';
+                    statusEl.className = 'text-[10px] text-rose-400';
+                }
+            } catch (e) {
+                statusEl.textContent = 'Unable to save changes at this time.';
+                statusEl.className = 'text-[10px] text-rose-400';
+            }
+        }
+
+        function renderVisitHistory(visits) {
+            const container = document.getElementById('patient-visits-container');
+            document.getElementById('visit-count').textContent = `${visits.length} Visit${visits.length === 1 ? '' : 's'}`;
+
+            if (!visits.length) {
+                container.innerHTML = `<div class="glass-panel p-12 rounded-2xl text-center text-slate-500 text-xs">No visits on record yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = visits.map((v, idx) => {
+                const dateStr = v.created_at ? new Date(v.created_at).toLocaleString() : 'Unknown date';
+                const isTriage = v.visit_type === 'er_triage';
+                const badge = isTriage
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-teal-500/10 text-teal-300 border border-teal-500/20">ER Triage</span>`
+                    : (v.visit_type === 'diagnosis'
+                        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Diagnosis</span>`
+                        : `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/5 text-slate-300 border border-white/10">Manual</span>`);
+
+                let bodyHtml;
+                if (isTriage) {
+                    const summary = v.triage_summary || {};
+                    const theme = ESI_THEME_MAP[v.esi_level] || ESI_THEME_MAP[3];
+                    bodyHtml = `
+                        <div class="text-xs text-slate-300"><strong class="text-slate-200">Complaint:</strong> ${escapeHtml(v.chief_complaint || summary.chief_complaint)}</div>
+                        <div class="text-xs text-slate-400 font-mono mt-1"><strong class="text-slate-300">Vitals:</strong> ${escapeHtml(v.vitals || summary.vitals)}</div>
+                        ${v.esi_level ? `<span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold ${theme.bg} ${theme.text} border ${theme.border}">${theme.label}</span>` : ''}
+                        ${summary.prognosis_outlook ? `<button onclick="openVisitPrognosisModal(${idx})" class="block mt-2 text-xs text-teal-400 hover:text-teal-300 font-semibold underline underline-offset-2">View Full Prognosis &rarr;</button>` : ''}
+                    `;
+                } else {
+                    bodyHtml = `
+                        <div class="text-xs text-slate-300"><strong class="text-slate-200">Diagnosis:</strong> ${escapeHtml(v.diagnosis_text)}</div>
+                        ${v.care_plan ? `<div class="text-xs text-slate-400 mt-1"><strong class="text-slate-300">Care Plan:</strong> ${escapeHtml(v.care_plan)}</div>` : ''}
+                    `;
+                }
+
+                return `
+                    <div class="glass-panel p-4 rounded-2xl border border-white/10 space-y-2 cascade-item">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-2">${badge}<span class="text-xs text-slate-400 font-mono">${dateStr}</span></div>
+                            ${v.physician_name ? `<span class="text-[10px] text-slate-500">By ${escapeHtml(v.physician_name)}</span>` : ''}
+                        </div>
+                        ${bodyHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openVisitPrognosisModal(idx) {
+            const v = currentProfileVisits[idx];
+            if (!v || !v.triage_summary) return;
+            const summary = v.triage_summary;
+            const esiLevel = v.esi_level || summary.esi_level || 3;
+            const theme = ESI_THEME_MAP[esiLevel] || ESI_THEME_MAP[3];
+            const prog = summary.prognosis_outlook || {};
+
+            document.getElementById('modal-esi-badge').textContent = theme.label;
+            document.getElementById('modal-esi-badge').className = `px-3 py-1 rounded-xl text-xs font-extrabold uppercase font-mono ${theme.bg} ${theme.text} border ${theme.border}`;
+            document.getElementById('modal-patient-name').textContent = summary.name || (currentProfilePatient ? currentProfilePatient.full_name : 'Patient');
+            document.getElementById('modal-patient-meta').textContent = `Visit Date: ${v.created_at ? new Date(v.created_at).toLocaleString() : '--'} • Vitals: ${v.vitals || summary.vitals || '--'}`;
+
+            document.getElementById('modal-duration').textContent = prog.expected_duration || "--";
+            document.getElementById('modal-expectations').textContent = prog.long_term_expectations || "--";
+            document.getElementById('modal-treatment').textContent = prog.treatment_plan || "--";
+
+            const medsContainer = document.getElementById('modal-medications');
+            const meds = prog.recommended_medications || [];
+            medsContainer.innerHTML = meds.map(m => `<span class="px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-300 border border-teal-500/20">${escapeHtml(m)}</span>`).join('');
+
+            document.getElementById('modal-prognosis').classList.remove('hidden');
+        }
+
+        // Save-to-Patient linking (used by both the Triage Queue and the Diagnosis modal)
+        function openLinkPatientModal(payload) {
+            pendingLinkPayload = payload;
+            linkSearchResults = [];
+            document.getElementById('link-patient-search').value = '';
+            document.getElementById('link-patient-results').innerHTML = '';
+            document.getElementById('link-new-patient-name').value = '';
+            document.getElementById('link-patient-status').textContent = '';
+            document.getElementById('modal-link-patient').classList.remove('hidden');
+        }
+
+        document.getElementById('btn-close-link-modal').addEventListener('click', () => {
+            document.getElementById('modal-link-patient').classList.add('hidden');
+            pendingLinkPayload = null;
+        });
+
+        document.getElementById('link-patient-search').addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            const resultsContainer = document.getElementById('link-patient-results');
+            if (!query) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+            try {
+                const res = await fetch(`/api/patients?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                linkSearchResults = data.patients || [];
+                resultsContainer.innerHTML = linkSearchResults.length
+                    ? linkSearchResults.map((p, idx) => `
+                        <div onclick="attachRecordToPatientByIndex(${idx})" class="glass-card glass-card-hover p-3 rounded-xl cursor-pointer">
+                            <div class="text-xs font-bold text-white">${escapeHtml(p.full_name)}</div>
+                            <div class="text-[10px] text-slate-500 font-mono">${escapeHtml(p.patient_code)}</div>
+                        </div>
+                    `).join('')
+                    : `<div class="text-xs text-slate-500 text-center py-3">No matching patients found.</div>`;
+            } catch (e) {
+                resultsContainer.innerHTML = `<div class="text-xs text-rose-400 text-center py-3">Search failed.</div>`;
+            }
+        });
+
+        function attachRecordToPatientByIndex(idx) {
+            const p = linkSearchResults[idx];
+            if (p) attachRecordToPatient(p.patient_code, p.full_name);
+        }
+
+        document.getElementById('btn-link-create-patient').addEventListener('click', async () => {
+            const fullName = document.getElementById('link-new-patient-name').value.trim();
+            const statusEl = document.getElementById('link-patient-status');
+            if (!fullName) {
+                statusEl.textContent = 'Enter a full name to quick-create a patient.';
+                statusEl.className = 'text-[10px] text-rose-400';
+                return;
+            }
+            statusEl.textContent = 'Creating patient...';
+            statusEl.className = 'text-[10px] text-slate-500';
+            try {
+                const res = await fetch('/api/patients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ full_name: fullName })
+                });
+                const data = await res.json();
+                if (data.patient) {
+                    attachRecordToPatient(data.patient.patient_code, data.patient.full_name);
+                } else {
+                    statusEl.textContent = data.error || 'Unable to create patient.';
+                    statusEl.className = 'text-[10px] text-rose-400';
+                }
+            } catch (e) {
+                statusEl.textContent = 'Unable to create patient at this time.';
+                statusEl.className = 'text-[10px] text-rose-400';
+            }
+        });
+
+        async function attachRecordToPatient(patientCode, patientName) {
+            const statusEl = document.getElementById('link-patient-status');
+            if (!pendingLinkPayload) return;
+
+            let visitPayload = {};
+            if (pendingLinkPayload.source === 'triage') {
+                const p = currentQueue.find(item => item.patient_id === pendingLinkPayload.patient_id);
+                if (!p) {
+                    statusEl.textContent = 'Unable to find this triage entry anymore.';
+                    statusEl.className = 'text-[10px] text-rose-400';
+                    return;
+                }
+                visitPayload = {
+                    visit_type: 'er_triage',
+                    chief_complaint: p.chief_complaint,
+                    vitals: p.vitals,
+                    esi_level: p.esi_level,
+                    triage_summary: p
+                };
+            } else if (pendingLinkPayload.source === 'diagnosis') {
+                visitPayload = {
+                    visit_type: 'diagnosis',
+                    diagnosis_text: document.getElementById('input-diagnosis-text').value.trim(),
+                    care_plan: document.getElementById('input-diagnosis-care-plan').value.trim(),
+                    physician_name: document.getElementById('input-diagnosis-physician').value.trim()
+                };
+                if (!visitPayload.diagnosis_text) {
+                    statusEl.textContent = 'Enter a diagnosis above before saving it to a patient record.';
+                    statusEl.className = 'text-[10px] text-rose-400';
+                    return;
+                }
+            }
+
+            statusEl.textContent = `Saving to ${patientName}'s record...`;
+            statusEl.className = 'text-[10px] text-slate-500';
+
+            try {
+                const res = await fetch(`/api/patients/${encodeURIComponent(patientCode)}/visits`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(visitPayload)
+                });
+                const data = await res.json();
+                if (data.visit) {
+                    statusEl.textContent = `Saved to ${patientName}'s patient record.`;
+                    statusEl.className = 'text-[10px] text-teal-400';
+                    setTimeout(() => {
+                        document.getElementById('modal-link-patient').classList.add('hidden');
+                        pendingLinkPayload = null;
+                    }, 1200);
+                } else {
+                    statusEl.textContent = data.error || 'Unable to save this record.';
+                    statusEl.className = 'text-[10px] text-rose-400';
+                }
+            } catch (e) {
+                statusEl.textContent = 'Unable to save this record at this time.';
+                statusEl.className = 'text-[10px] text-rose-400';
+            }
+        }
+
+        document.getElementById('btn-save-diagnosis-to-patient').addEventListener('click', () => {
+            openLinkPatientModal({ source: 'diagnosis' });
         });
     </script>
 </body>
